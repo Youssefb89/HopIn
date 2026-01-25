@@ -2,3 +2,9 @@
  
  # Ense 281 Group Project
 
+
+**Team Members:**
+- Jessica Nathanail- 200 379 383
+- Suhayb Hoolash- 200510097
+- Rudra Patel - 200498392
+- Youssef Abdelaziz - 200511755
