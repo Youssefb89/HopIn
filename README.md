@@ -9,8 +9,10 @@
 - Suhayb Hoolash- 200510097
 - Rudra Patel - 200498392
 - Youssef Abdelaziz - 200511755
+- Rida Hashmi - 200504477
 
 ---
 
 ## Table of Contents
+
 
