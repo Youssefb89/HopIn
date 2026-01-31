@@ -4,9 +4,9 @@
 
  
  # HopIn
+### ENSE 281 - Software Engineering Management Project
 
-
-**Team Members:**
+**Group H Team Members:**
 - Jessica Nathanail- 200379383
 - Suhayb Hoolash- 200510097
 - Rudra Patel - 200498392
@@ -15,7 +15,8 @@
 
 ---
 
-## Table of Contents
+## Project Description
+
 
 
 
