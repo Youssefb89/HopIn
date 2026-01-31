@@ -1,7 +1,6 @@
 ![University of Regina Logo](https://www.uregina.ca/communications-marketing/assets/visual-identity/tagline-urlogo-white-background/ur_logo-w-1-line-tagline_horiz_full-colour_rgb.png)
 
-
-<img width="359" height="455" alt="HopIn Logo" src="https://github.com/user-attachments/assets/af56eb1e-2e96-4215-96c4-460ddec499c2" />
+<p align="center"><img width="359" height="455" alt="HopIn Logo" src="https://github.com/user-attachments/assets/af56eb1e-2e96-4215-96c4-460ddec499c2" /></p>
 
  
  # HopIn
@@ -17,6 +16,7 @@
 ---
 
 ## Table of Contents
+
 
 
 
