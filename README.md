@@ -13,9 +13,7 @@
 
 ---
 
-## Project Description
-
-# 🚗 HopIn — Campus Carpooling Made Simple
+# HopIn ~ Campus Carpooling Made Simple
 
 **HopIn** is a campus-focused carpooling web application designed to help **University of Regina** students who live far from campus or outside Regina find affordable, reliable rides to and from the university.
 
@@ -23,16 +21,16 @@ Many U of R students face daily commuting challenges due to limited public trans
 
 ---
 
-## 🎯 Problem Statement
+## Problem Statement
 
-- Public transit can be slow, unreliable, or limited—especially during off-peak hours  
+- Public transit can be slow, unreliable, or limited especially during off-peak hours  
 - Driving alone is costly and parking availability on campus is limited  
 - Ride-hailing services are too expensive for daily commuting  
 - Informal carpooling through social media is unreliable and unsafe  
 
 ---
 
-## 💡 Solution
+## Solution
 
 HopIn provides a **centralized, campus-specific carpooling platform** where:
 
@@ -40,11 +38,9 @@ HopIn provides a **centralized, campus-specific carpooling platform** where:
 - Riders can browse available rides and request seats  
 - Both parties benefit from affordability, transparency, and accountability  
 
-Unlike generic ride-sharing platforms, HopIn is built specifically for a university environment.
-
 ---
 
-## 🔑 Core Features (MVP)
+## Core Features (MVP)
 
 - **User Accounts**  
   Register using a University of Regina email and create a driver or rider profile  
@@ -66,7 +62,7 @@ Unlike generic ride-sharing platforms, HopIn is built specifically for a univers
 
 ---
 
-## 🛠 Technical Overview
+## Technical Overview
 
 - **Architecture:** Model-View-Controller (MVC)  
 - **Core Entities:** User, Ride, Request, Rating  
@@ -75,7 +71,7 @@ Unlike generic ride-sharing platforms, HopIn is built specifically for a univers
 
 ---
 
-## ⏱ Project Scope & Timeline
+## Project Scope & Timeline
 
 - **Development Timeline:** 2 months  
 - **Focus:** MVP development with core functionality  
@@ -83,7 +79,7 @@ Unlike generic ride-sharing platforms, HopIn is built specifically for a univers
 
 ---
 
-## 🚀 Future Expansion
+## Future Expansion
 
 While HopIn is initially built for the **University of Regina**, the platform is designed to scale to other universities and institutions.
 
@@ -93,6 +89,7 @@ Planned future enhancements include:
 - Support for multiple campuses  
 
 ---
+
 
 
 
