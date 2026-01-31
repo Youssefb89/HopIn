@@ -13,7 +13,7 @@
 
 ---
 
-# HopIn ~ Campus Carpooling Made Simple
+# HopIn — Campus Carpooling Made Simple
 
 **HopIn** is a campus-focused carpooling web application designed to help **University of Regina** students who live far from campus or outside Regina find affordable, reliable rides to and from the university.
 
@@ -89,6 +89,7 @@ Planned future enhancements include:
 - Support for multiple campuses  
 
 ---
+
 
 
 
