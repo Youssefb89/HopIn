@@ -5,11 +5,11 @@
 ### ENSE 281 - Software Engineering Management Project
 
 **Group H Team Members:**
-- Jessica Nathanail- 200379383
-- Suhayb Hoolash- 200510097
-- Rudra Patel - 200498392
-- Youssef Abdelaziz - 200511755
-- Rida Hashmi - 200504477
+- Jessica Nathanail
+- Suhayb Hoolash
+- Rudra Patel 
+- Youssef Abdelaziz 
+- Rida Hashmi 
 
 ---
 
@@ -89,6 +89,7 @@ Planned future enhancements include:
 - Support for multiple campuses  
 
 ---
+
 
 
 
