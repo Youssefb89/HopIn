@@ -1,9 +1,9 @@
 # HopIn
 
-HopIn is my ride-sharing project.  
+HopIn is our ride-sharing project.  
 This version is built with simple HTML, CSS, JavaScript, Bootstrap, jQuery, Node.js, Express.js, and Supabase.
 
-I kept the code and docs beginner-friendly on purpose, so it is easier to learn how the project works page by page.
+We kept the code and docs beginner-friendly on purpose, so it is easier to learn how the project works page by page.
 
 ## What this project can do right now
 
