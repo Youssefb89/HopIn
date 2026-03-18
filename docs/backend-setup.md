@@ -1,27 +1,46 @@
 # Backend Setup Guide
 
-This project is now using:
+This is the simple setup guide I would follow on a fresh machine.
 
-- Supabase URL
-- Supabase anon key
-- 8 sample profile rows only
-- no fake ride or request seed data
+## 1. Go into the project
 
-## 1. Create `.env`
+```powershell
+cd C:\Users\Rutva\Downloads\HopIn\Project-App
+```
 
-Inside `C:\Users\Rutva\Downloads\HopIn\Project-App`, create:
+## 2. Install packages
+
+Use `npm.cmd` on this machine:
+
+```powershell
+npm.cmd install
+```
+
+## 3. Create `.env`
+
+Create this file in the project root:
 
 ```env
 PORT=3000
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-## 2. Run the schema
+This project is using the Supabase anon key only.
 
-Run [schema.sql](C:\Users\Rutva\Downloads\HopIn\Project-App\supabase\schema.sql) in Supabase SQL Editor.
+## 4. Run the schema
 
-## 3. Disable RLS if it was auto-enabled
+Open Supabase SQL Editor and run:
+
+- `supabase/schema.sql`
+
+If your tables were already created before the return commute time was added, also run:
+
+- `supabase/add-schedule-return-time.sql`
+
+## 5. Disable RLS if needed
+
+If RLS was auto-enabled, run:
 
 ```sql
 alter table profiles disable row level security;
@@ -34,47 +53,63 @@ alter table ratings disable row level security;
 alter table schedules disable row level security;
 ```
 
-## 4. Clear old sample ride/request data
-
-If you already inserted old fake rides, requests, vehicles, or messages, run:
-
-[clear-non-profile-data.sql](C:\Users\Rutva\Downloads\HopIn\Project-App\supabase\clear-non-profile-data.sql)
-
-## 5. Seed only the 8 profile rows
+## 6. Add sample profiles
 
 Run:
 
-[seed.sql](C:\Users\Rutva\Downloads\HopIn\Project-App\supabase\seed.sql)
+- `supabase/seed.sql`
 
-This will create only the 8 editable sample users.
+This adds the 8 profile rows.
 
-If you already ran an older 9-user seed once, also run:
+Optional cleanup files:
 
-[remove-old-9th-user.sql](C:\Users\Rutva\Downloads\HopIn\Project-App\supabase\remove-old-9th-user.sql)
+- `supabase/clear-non-profile-data.sql`
+- `supabase/remove-old-9th-user.sql`
 
-## 6. Start the app
+## 7. Start the app
 
 ```powershell
-cd C:\Users\Rutva\Downloads\HopIn\Project-App
 npm.cmd run dev
 ```
 
-## 7. Test these first
+Open:
+
+- [http://localhost:3000](http://localhost:3000)
+
+## 8. First things to test
+
+### API
 
 - `GET /api/users`
-- `GET /api/users/11111111-1111-4111-8111-111111111111`
 - `GET /api/rides`
+- `GET /api/my-requests?userId=11111111-1111-4111-8111-111111111111&view=driver`
+- `GET /api/my-rides?userId=66666666-6666-4666-8666-666666666666&view=rider`
 
-Expected result now:
+### Pages
 
-- `/api/users` should return 8 users
-- `/api/rides` should return an empty array until you add real rides
+- `/`
+- `/profile-settings`
+- `/find-ride`
+- `/my-requests`
+- `/my-rides`
 
-## 8. Current learning flow
+## 9. Real data you should add
 
-Right now the best flow is:
+At minimum, I suggest:
 
-1. Switch users from the navbar dropdown
-2. Edit profiles on the profile page
-3. Save changes and confirm they persist in Supabase
-4. Add rides and requests later when you are ready
+1. seed the 8 profiles
+2. save at least 1 vehicle for each driver or `both` user
+3. add a few rides
+4. then test booking requests and accepted rides
+
+## 10. Small Mermaid summary
+
+```mermaid
+flowchart TD
+    A["Create Supabase project"] --> B["Add .env file"]
+    B --> C["Run schema.sql"]
+    C --> D["Disable RLS if needed"]
+    D --> E["Run seed.sql"]
+    E --> F["npm.cmd run dev"]
+    F --> G["Open localhost:3000"]
+```

@@ -1,5 +1,7 @@
 # HopIn Database Schema
 
+This doc explains the tables in a simple way.
+
 ## Main tables
 
 - `profiles`
@@ -11,7 +13,17 @@
 - `schedules`
 - `messages`
 
-## Diagram
+## Main relationship idea
+
+One user can:
+
+- have one or more vehicles
+- post rides
+- send booking requests
+- create open ride requests
+- have commute schedules
+
+## ER diagram
 
 ```mermaid
 erDiagram
@@ -20,107 +32,130 @@ erDiagram
     PROFILES ||--o{ BOOKING_REQUESTS : sends
     PROFILES ||--o{ OPEN_RIDE_REQUESTS : creates
     PROFILES ||--o{ SCHEDULES : has
-    PROFILES ||--o{ RATINGS : reviews
-    PROFILES ||--o{ MESSAGES : sends
     VEHICLES ||--o{ RIDES : used_for
     RIDES ||--o{ BOOKING_REQUESTS : receives
-    RIDES ||--o{ RATINGS : linked_to
     BOOKING_REQUESTS ||--o{ MESSAGES : unlocks_chat
     OPEN_RIDE_REQUESTS ||--o{ MESSAGES : unlocks_chat
-
-    PROFILES {
-        uuid id PK
-        uuid auth_user_id
-        text full_name
-        text email
-        text role
-        text phone
-        text home_area
-        text commute_notes
-        numeric rating_avg
-    }
-
-    VEHICLES {
-        uuid id PK
-        uuid user_id FK
-        text make
-        text model
-        int vehicle_year
-        text color
-        text license_plate
-        int seats_available
-    }
-
-    RIDES {
-        uuid id PK
-        uuid driver_id FK
-        uuid vehicle_id FK
-        text origin
-        text destination
-        date ride_date
-        time ride_time
-        int seats_available
-        text status
-    }
-
-    BOOKING_REQUESTS {
-        uuid id PK
-        uuid ride_id FK
-        uuid rider_id FK
-        int seats_requested
-        text message
-        text pickup_otp
-        text status
-    }
-
-    OPEN_RIDE_REQUESTS {
-        uuid id PK
-        uuid rider_id FK
-        uuid accepted_driver_id FK
-        text origin
-        text destination
-        date ride_date
-        time ride_time
-        int seats_needed
-        text notes
-        text status
-    }
-
-    RATINGS {
-        uuid id PK
-        uuid reviewer_id FK
-        uuid reviewed_user_id FK
-        uuid ride_id FK
-        int score
-        text comment
-    }
-
-    SCHEDULES {
-        uuid id PK
-        uuid user_id FK
-        text day_of_week
-        time departure_time
-        text location
-        text destination
-    }
-
-    MESSAGES {
-        uuid id PK
-        uuid sender_id FK
-        uuid receiver_id FK
-        uuid booking_request_id FK
-        uuid open_ride_request_id FK
-        text content
-    }
 ```
 
-## Important note about messages
+## Table purpose
 
-Messages are not open by default.
+### `profiles`
 
-A chat is only allowed when one of these becomes accepted:
+Main user information:
 
-- a `booking_request`
-- an `open_ride_request`
+- name
+- email
+- role
+- phone
+- home area
+- notes
+- rating average
 
-That is why messages link to a request instead of only linking to a ride.
+### `vehicles`
+
+Driver vehicle information:
+
+- make
+- model
+- year
+- color
+- plate
+- seats available
+
+### `rides`
+
+Driver-posted rides:
+
+- driver
+- vehicle
+- origin
+- destination
+- date
+- time
+- seats
+- notes
+- status
+
+### `booking_requests`
+
+This table is for riders joining an already posted ride.
+
+Important columns:
+
+- `ride_id`
+- `rider_id`
+- `seats_requested`
+- `status`
+
+### `open_ride_requests`
+
+This table is for riders saying:
+
+`I need a ride from A to B at this time`
+
+Important columns:
+
+- `rider_id`
+- `accepted_driver_id`
+- route
+- date and time
+- seats needed
+- status
+
+### `schedules`
+
+This table is used by the Profile page for commute schedule.
+
+It stores:
+
+- day
+- leave time
+- return time
+- commute from
+- commute to
+
+### `ratings`
+
+This stores review rows.
+
+The Profile page mostly shows `profiles.rating_avg` because that is simpler for display.
+
+### `messages`
+
+This table exists, but it is not the focus of the project docs yet.
+
+Important idea:
+
+- messages should only happen after acceptance
+
+## Database flow diagram
+
+```mermaid
+flowchart TD
+    A["profiles"] --> B["vehicles"]
+    A --> C["rides"]
+    A --> D["booking_requests"]
+    A --> E["open_ride_requests"]
+    A --> F["schedules"]
+
+    B --> C
+    C --> D
+```
+
+## Main page to table mapping
+
+- `Profile page`
+  uses `profiles`, `schedules`, `vehicles`
+
+- `Find Ride`
+  uses `rides`, plus profile and vehicle info for display
+
+- `Ride Details`
+  uses `rides`, `profiles`, `vehicles`, and sometimes `booking_requests`
+
+- `My Requests`
+  uses `booking_requests` and `open_ride_requests`
+
+- `My Rides`
+  uses `rides`, accepted `booking_requests`, and accepted `open_ride_requests`

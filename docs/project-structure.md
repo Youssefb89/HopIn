@@ -1,8 +1,37 @@
 # HopIn Project Structure
 
-## Goal
+I kept this structure close to MVC and simple enough for learning.
 
-Use a beginner-friendly backend structure close to your PDF architecture while still fitting HopIn's real product flow and Supabase.
+## Main idea
+
+The frontend shows pages.  
+Routes connect URLs.  
+Controllers handle request and response.  
+Services hold logic.  
+Models talk to Supabase.
+
+## Folder shape
+
+```text
+Project-App
+  /docs
+  /public
+    /assets
+      /css
+      /js
+    /components
+    /pages
+  /src
+    /config
+    /controllers
+    /models
+    /routes
+    /services
+    app.js
+  /supabase
+  server.js
+  README.md
+```
 
 ## Backend structure
 
@@ -45,46 +74,62 @@ Use a beginner-friendly backend structure close to your PDF architecture while s
     ratingRoutes.js
     scheduleRoutes.js
     messageRoutes.js
-
-  app.js
 ```
 
-## Request flow
+## Frontend structure
 
-The backend uses two request types:
+- `public/pages`
+  full pages like Home, Find Ride, My Requests, My Rides
+
+- `public/components`
+  shared pieces like the navbar
+
+- `public/assets/js`
+  page scripts and shared script
+
+- `public/assets/css`
+  shared styling
+
+## One simple request example
+
+```mermaid
+flowchart LR
+    A["Browser button click"] --> B["Route"]
+    B --> C["Controller"]
+    C --> D["Service"]
+    D --> E["Model"]
+    E --> F["Supabase"]
+```
+
+## One simple page example
+
+```mermaid
+flowchart LR
+    A["URL /profile-settings"] --> B["pageRoutes.js"]
+    B --> C["pageController.js"]
+    C --> D["profile-settings.html"]
+    D --> E["app.js"]
+    D --> F["profile-settings.js"]
+```
+
+## Why I kept `services`
+
+I kept the `services` folder because:
+
+- it matches the architecture style we discussed
+- it makes logic easier to move out of controllers
+- it keeps the controller files smaller
+
+## Why there are separate request tables
+
+I did not use just one generic request table.
+
+I used:
 
 - `booking_requests`
-  Rider requests a seat on an existing posted ride.
-
 - `open_ride_requests`
-  Rider posts a new request from point A to point B for drivers to accept.
 
-## Important decisions
+This is easier to understand because:
 
-- We kept the `services` folder because you asked for it.
-- We removed the middleware-based structure and kept error handling simple in `app.js`.
-- We kept `schedules`, `ratings`, and `messages`.
-- Messages are only allowed after a booking request or open ride request is accepted.
-- We kept `vehicles` because it is core to the driver flow.
-
-## Main API groups
-
-- `/api/users`
-- `/api/rides`
-- `/api/ratings`
-- `/api/schedules`
-- `/api/messages`
-- `/api/my-requests`
-- `/api/my-rides`
-- `/api/open-ride-requests`
-- `/api/rides/:rideId/booking-requests`
-
-## Frontend pages
-
-- `/`
-- `/find-ride`
-- `/my-requests`
-- `/my-rides`
-- `/profile-settings`
-- `/vehicle-settings`
-
+- one is for joining an existing ride
+- one is for posting a new rider request
