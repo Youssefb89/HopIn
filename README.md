@@ -29,11 +29,11 @@ I kept the code and docs beginner-friendly on purpose, so it is easier to learn 
 
 ## Project folder
 
-The real app is inside:
+The real app is inside the `Project-App` folder.
 
-`C:\Users\Rutva\Downloads\HopIn\Project-App`
+If someone clones only this app repo, they can place it anywhere on their machine.
 
-The old prototype files in the parent `HopIn` folder are still there only as visual reference.
+The older prototype files in the parent `HopIn` folder were only used here as visual reference while building.
 
 ## Before you run the project
 
@@ -45,10 +45,21 @@ You should have:
 
 ## Step-by-step setup
 
-### 1. Open the project folder
+### 1. Clone or open the project folder
+
+If you already have the folder, just open it in terminal.
+
+If you are cloning from GitHub:
 
 ```powershell
-cd C:\Users\Rutva\Downloads\HopIn\Project-App
+git clone <your-repo-url>
+cd Project-App
+```
+
+If you already have the code locally:
+
+```powershell
+cd Project-App
 ```
 
 ### 2. Install packages

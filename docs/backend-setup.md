@@ -5,7 +5,7 @@ This is the simple setup guide I would follow on a fresh machine.
 ## 1. Go into the project
 
 ```powershell
-cd C:\Users\Rutva\Downloads\HopIn\Project-App
+cd Project-App
 ```
 
 ## 2. Install packages
