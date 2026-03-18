@@ -1,2 +1,1 @@
-The technical progress so far can be found in the MVPActivity3 branch as well as the KanBan board under the 'Projects' tab.
-**$${\color{green}\textbf{The \space technical \space progress \space so \space far \space can \space be \space found \space in \space the \space MVPActivity3 \space branch \space as \space well \space as \space the \space KanBan \space board \space under \space the \space 'Projects' \space tab.}}$$**
+**The technical progress so far can be found in the MVPActivity3 branch as well as the KanBan board under the 'Projects' tab.**
