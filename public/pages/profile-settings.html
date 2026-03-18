@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Settings | HopIn</title>
+  <link rel="icon" type="image/png" href="/Logo/HopIn%20Logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body data-page="profile-settings">
+  <div id="navbar-slot"></div>
+
+  <main class="container page-shell">
+    <div class="profile-container">
+      <section class="profile-header">
+        <div class="d-flex align-items-center gap-3">
+          <div id="profile-avatar" class="avatar-circle">H</div>
+          <div>
+            <h1 id="profile-header-name" class="h4 mb-1">Loading profile...</h1>
+            <span id="profile-header-role" class="status-pill">Profile</span>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row text-center g-3">
+          <div class="col-4 profile-stat">
+            <strong id="profile-stat-area">-</strong>
+            <small>Home Area</small>
+          </div>
+          <div class="col-4 profile-stat">
+            <strong id="profile-stat-rating">-</strong>
+            <small>Rating</small>
+          </div>
+          <div class="col-4 profile-stat">
+            <strong id="profile-stat-role" class="text-success">-</strong>
+            <small>Role</small>
+          </div>
+        </div>
+      </section>
+
+      <div class="profile-tab-buttons profile-tab-split mb-4">
+        <button class="btn btn-primary js-profile-tab" data-tab="profile" type="button">Profile Settings</button>
+        <button class="btn btn-outline-secondary js-profile-tab" data-tab="vehicle" type="button">My Vehicle</button>
+      </div>
+
+      <div id="profile-feedback" class="mb-3"></div>
+
+      <div id="profile-tab-panel" class="js-profile-panel">
+        <form id="profile-settings-form" class="section-stack">
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-3">I want to</h2>
+            <p class="mini-label mb-3">Choose how this user will use HopIn right now.</p>
+            <input id="profile-role-value" name="role" type="hidden" value="rider">
+
+            <div class="intent-grid">
+              <button class="intent-option js-intent-option" data-role="rider" type="button">
+                <span class="intent-title">Find Rides</span>
+                <span class="intent-copy">Use HopIn as a rider and request or book rides.</span>
+              </button>
+
+              <button class="intent-option js-intent-option" data-role="driver" type="button">
+                <span class="intent-title">Offer Rides</span>
+                <span class="intent-copy">Use HopIn as a driver and post available rides.</span>
+              </button>
+
+              <button class="intent-option js-intent-option" data-role="both" type="button">
+                <span class="intent-title">Do Both</span>
+                <span class="intent-copy">Switch between rider and driver actions when needed.</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-3">Personal Details</h2>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="profile-full-name">Full Name</label>
+                <input id="profile-full-name" name="full_name" class="form-control" type="text" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="profile-email">Email</label>
+                <input id="profile-email" name="email" class="form-control" type="email">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="profile-phone">Phone Number</label>
+                <input id="profile-phone" name="phone" class="form-control" type="text" placeholder="(306) 555-0123">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="profile-rating">Rating</label>
+                <input id="profile-rating" class="form-control" type="text" disabled>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-3">Location</h2>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label class="form-label" for="profile-home-area">Home Area / Neighbourhood</label>
+                <select id="profile-home-area" name="home_area" class="form-select">
+                  <option value="">Select your neighbourhood</option>
+                  <option value="Albert Park">Albert Park</option>
+                  <option value="Al Ritchie">Al Ritchie</option>
+                  <option value="Arcola East">Arcola East</option>
+                  <option value="Argyle Park/Englewood">Argyle Park/Englewood</option>
+                  <option value="Boothill">Boothill</option>
+                  <option value="Cathedral">Cathedral</option>
+                  <option value="Centre Square">Centre Square</option>
+                  <option value="Coronation Park">Coronation Park</option>
+                  <option value="Dewdney East">Dewdney East</option>
+                  <option value="Dieppe Westerra">Dieppe Westerra</option>
+                  <option value="Downtown">Downtown</option>
+                  <option value="Eastview">Eastview</option>
+                  <option value="Gladmer Park">Gladmer Park</option>
+                  <option value="Harbour Landing">Harbour Landing</option>
+                  <option value="Heritage">Heritage</option>
+                  <option value="Hillsdale">Hillsdale</option>
+                  <option value="Lakeview">Lakeview</option>
+                  <option value="McNab">McNab</option>
+                  <option value="Northeast">Northeast</option>
+                  <option value="North Central">North Central</option>
+                  <option value="Normanview">Normanview</option>
+                  <option value="Normanview West">Normanview West</option>
+                  <option value="Prairie View">Prairie View</option>
+                  <option value="Regent Park">Regent Park</option>
+                  <option value="Rosemont/Mount Royal">Rosemont/Mount Royal</option>
+                  <option value="Sherwood/McCarthy">Sherwood/McCarthy</option>
+                  <option value="Twin Lakes">Twin Lakes</option>
+                  <option value="Uplands">Uplands</option>
+                  <option value="Walsh Acres/Lakeridge">Walsh Acres/Lakeridge</option>
+                  <option value="Warehouse">Warehouse</option>
+                  <option value="Whitmore Park">Whitmore Park</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-3">Typical Commute Schedule</h2>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label" for="schedule-location">Commute From</label>
+                <input id="schedule-location" class="form-control" type="text" placeholder="Downtown">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="schedule-destination">Commute To</label>
+                <input id="schedule-destination" class="form-control" type="text" placeholder="University of Regina">
+              </div>
+            </div>
+
+            <label class="form-label mb-3">Commute Days</label>
+            <div class="schedule-chip-group mb-4">
+              <button class="schedule-chip js-schedule-day" data-day="Monday" type="button">Mon</button>
+              <button class="schedule-chip js-schedule-day" data-day="Tuesday" type="button">Tue</button>
+              <button class="schedule-chip js-schedule-day" data-day="Wednesday" type="button">Wed</button>
+              <button class="schedule-chip js-schedule-day" data-day="Thursday" type="button">Thu</button>
+              <button class="schedule-chip js-schedule-day" data-day="Friday" type="button">Fri</button>
+              <button class="schedule-chip js-schedule-day" data-day="Saturday" type="button">Sat</button>
+              <button class="schedule-chip js-schedule-day" data-day="Sunday" type="button">Sun</button>
+            </div>
+
+            <div id="schedule-rows" class="schedule-rows">
+              <div class="schedule-row d-none" data-day="Monday">
+                <div class="schedule-row-label">Mon</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Monday">Leave at</label>
+                    <input id="schedule-departure-Monday" class="form-control js-schedule-time" data-day="Monday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Monday">Return at</label>
+                    <input id="schedule-return-Monday" class="form-control js-schedule-return-time" data-day="Monday" type="time">
+                  </div>
+                </div>
+              </div>
+              <div class="schedule-row d-none" data-day="Tuesday">
+                <div class="schedule-row-label">Tue</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Tuesday">Leave at</label>
+                    <input id="schedule-departure-Tuesday" class="form-control js-schedule-time" data-day="Tuesday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Tuesday">Return at</label>
+                    <input id="schedule-return-Tuesday" class="form-control js-schedule-return-time" data-day="Tuesday" type="time">
+                  </div>
+                </div>
+              </div>
+              <div class="schedule-row d-none" data-day="Wednesday">
+                <div class="schedule-row-label">Wed</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Wednesday">Leave at</label>
+                    <input id="schedule-departure-Wednesday" class="form-control js-schedule-time" data-day="Wednesday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Wednesday">Return at</label>
+                    <input id="schedule-return-Wednesday" class="form-control js-schedule-return-time" data-day="Wednesday" type="time">
+                  </div>
+                </div>
+              </div>
+              <div class="schedule-row d-none" data-day="Thursday">
+                <div class="schedule-row-label">Thu</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Thursday">Leave at</label>
+                    <input id="schedule-departure-Thursday" class="form-control js-schedule-time" data-day="Thursday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Thursday">Return at</label>
+                    <input id="schedule-return-Thursday" class="form-control js-schedule-return-time" data-day="Thursday" type="time">
+                  </div>
+                </div>
+              </div>
+              <div class="schedule-row d-none" data-day="Friday">
+                <div class="schedule-row-label">Fri</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Friday">Leave at</label>
+                    <input id="schedule-departure-Friday" class="form-control js-schedule-time" data-day="Friday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Friday">Return at</label>
+                    <input id="schedule-return-Friday" class="form-control js-schedule-return-time" data-day="Friday" type="time">
+                  </div>
+                </div>
+              </div>
+              <div class="schedule-row d-none" data-day="Saturday">
+                <div class="schedule-row-label">Sat</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Saturday">Leave at</label>
+                    <input id="schedule-departure-Saturday" class="form-control js-schedule-time" data-day="Saturday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Saturday">Return at</label>
+                    <input id="schedule-return-Saturday" class="form-control js-schedule-return-time" data-day="Saturday" type="time">
+                  </div>
+                </div>
+              </div>
+              <div class="schedule-row d-none" data-day="Sunday">
+                <div class="schedule-row-label">Sun</div>
+                <div class="schedule-time-grid">
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-departure-Sunday">Leave at</label>
+                    <input id="schedule-departure-Sunday" class="form-control js-schedule-time" data-day="Sunday" type="time">
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1" for="schedule-return-Sunday">Return at</label>
+                    <input id="schedule-return-Sunday" class="form-control js-schedule-return-time" data-day="Sunday" type="time">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-3">Notes</h2>
+            <label class="form-label" for="profile-commute-notes">Commute Notes</label>
+            <textarea id="profile-commute-notes" name="commute_notes" class="form-control" rows="4" placeholder="Morning classes, flexible afternoons, preferred pickup details..."></textarea>
+          </section>
+
+          <div class="d-grid mb-5">
+            <button class="btn btn-primary btn-lg" type="submit">Save Changes</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="vehicle-tab-panel" class="js-profile-panel d-none">
+        <form id="vehicle-settings-form" class="section-stack">
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-4">Vehicle Information</h2>
+
+            <div class="row g-4">
+              <div class="col-md-6">
+                <label class="form-label" for="vehicle-make">Make</label>
+                <input id="vehicle-make" name="make" type="text" class="form-control" placeholder="Toyota">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="vehicle-model">Model</label>
+                <input id="vehicle-model" name="model" type="text" class="form-control" placeholder="Camry">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="vehicle-year">Year</label>
+                <input id="vehicle-year" name="vehicle_year" type="number" class="form-control" placeholder="2021">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="vehicle-color">Color</label>
+                <input id="vehicle-color" name="color" type="text" class="form-control" placeholder="White">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="vehicle-license-plate">License Plate</label>
+                <input id="vehicle-license-plate" name="license_plate" type="text" class="form-control" placeholder="ABC 123">
+                <small class="upload-hint">Only the last few characters should be shown to riders later.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="vehicle-seats-available">Seats Available</label>
+                <select id="vehicle-seats-available" name="seats_available" class="form-select">
+                  <option value="1">1 seat</option>
+                  <option value="2">2 seats</option>
+                  <option value="3">3 seats</option>
+                  <option value="4">4 seats</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-pane-card">
+            <h2 class="section-title mb-4">Vehicle Photos</h2>
+            <div class="row g-4">
+              <div class="col-md-6">
+                <label class="form-label">Front View</label>
+                <div class="upload-box">Upload Photo Later</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Side View</label>
+                <div class="upload-box">Upload Photo Later</div>
+              </div>
+            </div>
+          </section>
+
+          <div class="d-grid mb-5">
+            <button class="btn btn-primary btn-lg" type="submit">Save Vehicle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/app.js"></script>
+  <script src="/assets/js/profile-settings.js"></script>
+</body>
+</html>

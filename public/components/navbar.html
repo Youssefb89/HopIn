@@ -1,0 +1,44 @@
+<nav class="navbar navbar-expand-lg topbar border-bottom">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="/">
+      <img class="brand-mark" src="/Logo/HopIn%20Logo.png" alt="HopIn logo">
+      <span>HopIn</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#hopinNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="hopinNav">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+        <li class="nav-item">
+          <a class="nav-link" data-nav="home" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-nav="find-ride" href="/find-ride">Find</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-nav="my-requests" href="/my-requests">My Requests</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-nav="my-rides" href="/my-rides">My Rides</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-nav="messages" href="/messages">Messages</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-nav="profile-settings" href="/profile-settings">Profile</a>
+        </li>
+        <li class="nav-item navbar-user-switcher">
+          <div class="user-switch-box">
+            <label class="user-switch-label" for="current-user-select">Current User</label>
+            <select id="current-user-select" class="form-select form-select-sm" disabled>
+              <option value="">Loading users...</option>
+            </select>
+            <div id="current-user-role" class="user-switch-meta">Choose a profile</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

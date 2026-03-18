@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Settings | HopIn</title>
+  <link rel="icon" type="image/png" href="/Logo/HopIn%20Logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body data-page="vehicle-settings">
+  <div id="navbar-slot"></div>
+
+  <main class="container page-shell">
+    <div class="content-card">
+      <div class="d-flex justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+          <h1 class="section-title mb-1">Vehicle settings</h1>
+          <p class="placeholder-note mb-0">Driver vehicle details will live in the `vehicles` table in Supabase.</p>
+        </div>
+        <span class="ride-pill">Driver setup</span>
+      </div>
+
+      <form class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Make</label>
+          <input class="form-control" type="text" placeholder="Toyota">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Model</label>
+          <input class="form-control" type="text" placeholder="Camry">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Year</label>
+          <input class="form-control" type="number" placeholder="2022">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Color</label>
+          <input class="form-control" type="text" placeholder="White">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Seats available</label>
+          <select class="form-select">
+            <option>1</option>
+            <option>2</option>
+            <option selected>3</option>
+            <option>4</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">License plate</label>
+          <input class="form-control" type="text" placeholder="ABC 123">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Photo upload</label>
+          <input class="form-control" type="file">
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary" type="button">Save vehicle</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/app.js"></script>
+</body>
+</html>
+

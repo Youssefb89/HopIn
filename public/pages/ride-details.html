@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride Details | HopIn</title>
+  <link rel="icon" type="image/png" href="/Logo/HopIn%20Logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body data-page="find-ride">
+  <div id="navbar-slot"></div>
+
+  <main class="container page-shell">
+    <div class="ride-detail-shell">
+      <div class="mb-3">
+        <a id="ride-details-back-link" class="text-decoration-none fw-semibold" href="/find-ride">&larr; Back</a>
+      </div>
+
+      <section class="ride-detail-hero mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+          <div>
+            <h1 class="page-title mb-1">Ride Details</h1>
+            <p class="placeholder-note mb-0">See route info, driver info, and the current ride status.</p>
+          </div>
+          <span id="ride-detail-status" class="status-badge status-open">open</span>
+        </div>
+
+        <div class="ride-stage-row">
+          <div class="ride-stage is-active">
+            <div class="ride-stage-icon">1</div>
+            <div class="ride-stage-label">Requested</div>
+          </div>
+          <div class="ride-stage">
+            <div class="ride-stage-icon">2</div>
+            <div class="ride-stage-label">Accepted</div>
+          </div>
+          <div class="ride-stage">
+            <div class="ride-stage-icon">3</div>
+            <div class="ride-stage-label">In Progress</div>
+          </div>
+          <div class="ride-stage">
+            <div class="ride-stage-icon">4</div>
+            <div class="ride-stage-label">Completed</div>
+          </div>
+        </div>
+      </section>
+
+      <div id="ride-detail-feedback" class="mb-3"></div>
+
+      <div id="ride-detail-content" class="detail-loading">Loading ride details...</div>
+    </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/app.js"></script>
+  <script src="/assets/js/ride-details.js"></script>
+</body>
+</html>
