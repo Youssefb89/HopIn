@@ -1,8 +1,8 @@
 # HopIn Docs
 
-This docs folder is my simple learning guide for the project.
+This docs folder is a simple learning guide for the project.
 
-I split the docs by topic so it is easier to read one workflow at a time.
+The docs are split by topic so it is easier to read one workflow at a time.
 
 ## Read this order if you are new
 
@@ -40,3 +40,15 @@ I split the docs by topic so it is easier to read one workflow at a time.
 
 - `user-flow.md`
   This is the bigger product-level summary of how the main workflows connect together.
+
+## Current note
+
+The app now starts with login or signup first.
+
+After that, the user can move through:
+
+1. Profile
+2. Find Ride
+3. My Requests
+4. My Rides
+5. Messages

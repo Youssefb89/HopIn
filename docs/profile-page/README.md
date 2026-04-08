@@ -48,22 +48,21 @@ flowchart TD
 At the top there is:
 
 - shared navbar
-- current user dropdown
+- logout access from the shared navbar
 - profile header card
 - profile stats
 
 The navbar comes from `app.js` and `navbar.html`.
 
-The selected user is stored in local storage, so when I switch user, the page reloads using that user.
+The active user now comes from login session and shared auth state.
 
 ## What `app.js` does here
 
 `app.js` is important because it:
 
 - loads the navbar
-- fetches `/api/users`
-- fills the current user dropdown
-- stores the current selected user
+- checks auth state
+- keeps shared session state available
 - exposes `window.HopinSession`
 
 That means the Profile page does not guess who the user is.  
@@ -205,6 +204,6 @@ This is separate because vehicle data is a different type of data and can grow l
 
 The Profile page is basically:
 
-`shared current user + profile form + commute schedule form + vehicle form`
+`shared logged-in user + profile form + commute schedule form + vehicle form`
 
 all joined together on one page.

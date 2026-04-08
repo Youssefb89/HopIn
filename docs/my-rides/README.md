@@ -112,7 +112,7 @@ Accepted rider requests come from:
 
 This page is for active or accepted ride activity.
 
-So I think of it like this:
+It can be understood like this:
 
 - `My Requests` = pending things
 - `My Rides` = real ride activity

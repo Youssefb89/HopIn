@@ -1,6 +1,6 @@
 # HopIn Project Structure
 
-I kept this structure close to MVC and simple enough for learning.
+This structure stays close to MVC and simple enough for learning.
 
 ## Main idea
 
@@ -112,9 +112,9 @@ flowchart LR
     D --> F["profile-settings.js"]
 ```
 
-## Why I kept `services`
+## Why `services` stayed in the project
 
-I kept the `services` folder because:
+The `services` folder stayed because:
 
 - it matches the architecture style we discussed
 - it makes logic easier to move out of controllers
@@ -122,9 +122,9 @@ I kept the `services` folder because:
 
 ## Why there are separate request tables
 
-I did not use just one generic request table.
+This project does not use just one generic request table.
 
-I used:
+It uses:
 
 - `booking_requests`
 - `open_ride_requests`

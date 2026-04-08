@@ -1220,3 +1220,16 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.auth-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-title-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+

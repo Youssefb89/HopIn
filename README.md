@@ -7,7 +7,7 @@ We kept the code and docs beginner-friendly on purpose, so it is easier to learn
 
 ## What this project can do right now
 
-- switch between sample users from the navbar
+- sign up and log in
 - edit profile details
 - save vehicle details
 - post a ride
@@ -19,6 +19,63 @@ We kept the code and docs beginner-friendly on purpose, so it is easier to learn
 - show accepted rides in `My Rides`
 
 `Messages` is still not explained in the docs on purpose because that part is not the focus yet.
+
+## Simple app flow
+
+This is the simple user flow for how someone can use HopIn:
+
+```mermaid
+flowchart TD
+    A["Open HopIn"] --> B["Login or Sign Up"]
+    B --> C["Home Page"]
+
+    C --> D["Profile"]
+    D --> E["Set role: Rider / Driver / Both"]
+    D --> F["Update personal details"]
+    D --> G["Add vehicle if offering rides"]
+
+    C --> H["Find Ride"]
+    H --> I["Search rides"]
+    I --> J["Open Ride Details"]
+    J --> K{"Can this user request?"}
+
+    K -->|Rider or Both| L["Request This Ride"]
+    K -->|Ride owner| M["View in My Rides"]
+    K -->|Driver only| N["Request blocked"]
+
+    L --> O["Request appears in My Requests"]
+    O --> P["Driver opens My Requests"]
+    P --> Q{"Driver decision"}
+
+    Q -->|Accept| R["Seats update on ride"]
+    R --> S["Ride appears in My Rides"]
+    R --> T["Messages unlocked"]
+    Q -->|Decline| U["Rider sees declined update"]
+
+    C --> V["My Rides"]
+    V --> W{"User role view"}
+
+    W -->|Driver| X["Post a Ride"]
+    X --> Y["Ride appears in Find Ride"]
+
+    W -->|Rider| Z["Request a Ride"]
+    Z --> AA["Open rider request appears in My Requests"]
+    AA --> AB["Driver can accept it"]
+    AB --> AC["Accepted request moves to My Rides"]
+    AB --> AD["Messages unlocked"]
+
+    S --> AE["After ride time passes"]
+    AC --> AE
+    AE --> AF["Driver marks ride completed"]
+
+    AF --> AG["Completed ride goes to Completed section"]
+    AG --> AH["User can Rate"]
+    AG --> AI["User can Report issue"]
+
+    T --> AJ["Messages page"]
+    AD --> AJ
+    AJ --> AK["Only accepted rides can chat"]
+```
 
 ## Tech stack
 
@@ -229,9 +286,9 @@ Then open:
 
 ## 8. Recommended testing order
 
-This is the order we would personally test:
+This is the order our group would test:
 
-1. switch users from the navbar
+1. sign up or log in
 2. update profile page
 3. update vehicle page
 4. add a few rides
@@ -295,6 +352,5 @@ Best docs for learning the project:
 
 ## Small note
 
-We wrote these docs in a simple style on purpose.  
-The idea is not to sound too formal.
-
+These docs were written in a simple style on purpose.  
+The goal is to keep them easy to read like a student project document.

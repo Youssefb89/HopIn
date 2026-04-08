@@ -2,7 +2,7 @@
 
 This doc is the big-picture flow of the app.
 
-I wrote this as a product overview, not as a file-by-file explanation.
+This was written as a product overview, not as a file-by-file explanation.
 
 ## Main idea
 
@@ -19,6 +19,8 @@ Because of that, the app has:
 
 ## Main pages
 
+- Login
+- Signup
 - Home
 - Find Ride
 - Ride Details
@@ -30,24 +32,25 @@ Because of that, the app has:
 
 ```mermaid
 flowchart TD
-    A["Profile page"] --> B["User saves role, profile, vehicle, and commute info"]
-    B --> C["Home page"]
-    C --> D["Find Ride page"]
-    D --> E["Ride Details page"]
-    E --> F["Request This Ride"]
-    F --> G["booking_requests table"]
-    G --> H["My Requests page"]
-    H --> I["Driver accepts or declines"]
-    I --> J["My Rides page"]
+    A["Login or Signup"] --> B["Home page"]
+    B --> C["Profile page"]
+    C --> D["User saves role, profile, vehicle, and commute info"]
+    D --> E["Find Ride page"]
+    E --> F["Ride Details page"]
+    F --> G["Request This Ride"]
+    G --> H["booking_requests table"]
+    H --> I["My Requests page"]
+    I --> J["Driver accepts or declines"]
+    J --> K["My Rides page"]
 
-    C --> K["My Rides page"]
-    K --> L["Request a Ride form"]
-    L --> M["open_ride_requests table"]
-    M --> H
+    B --> L["My Rides page"]
+    L --> M["Request a Ride form"]
+    M --> N["open_ride_requests table"]
+    N --> I
 
-    K --> N["Post a Ride form"]
-    N --> O["rides table"]
-    O --> D
+    L --> O["Post a Ride form"]
+    O --> P["rides table"]
+    P --> E
 ```
 
 ## Flow 1: Driver posts a ride

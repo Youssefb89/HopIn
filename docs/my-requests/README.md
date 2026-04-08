@@ -40,7 +40,7 @@ These come from:
 
 Driver View shows:
 
-- requests on my posted rides
+- requests on posted rides owned by the current driver
 - open rider requests
 
 This is where the driver accepts or declines things.
@@ -98,7 +98,7 @@ It does not save a global ignored status because other drivers should still be a
 
 ## Why this page is useful
 
-I think this page is the best place for pending request work because:
+This page is a good place for pending request work because:
 
 - it keeps rider and driver logic in one place
 - it avoids building a large dashboard

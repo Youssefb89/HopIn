@@ -1,6 +1,6 @@
 # Backend Setup Guide
 
-This is the simple setup guide I would follow on a fresh machine.
+This is the simple setup guide our group would follow on a fresh machine.
 
 ## 1. Go into the project
 
@@ -91,6 +91,8 @@ Open:
 ### Pages
 
 - `/`
+- `/login`
+- `/signup`
 - `/profile-settings`
 - `/find-ride`
 - `/my-requests`
@@ -98,12 +100,13 @@ Open:
 
 ## 9. Real data you should add
 
-At minimum, I suggest:
+At minimum, this is the suggested order:
 
 1. seed the 8 profiles
-2. save at least 1 vehicle for each driver or `both` user
-3. add a few rides
-4. then test booking requests and accepted rides
+2. create an auth account from `Sign Up` or log in from `Log In`
+3. save at least 1 vehicle for each driver or `both` user
+4. add a few rides
+5. then test booking requests and accepted rides
 
 ## 10. Small Mermaid summary
 
