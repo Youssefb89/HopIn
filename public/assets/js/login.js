@@ -33,8 +33,11 @@ $(function () {
       $("#login-password").val()
     )
       .then(function () {
+        return window.HopinSession.refreshUsers();
+      })
+      .then(function () {
         if (!window.HopinAuth.getProfile()) {
-          setLoginFeedback("Signed in, but this auth account is not linked to a HopIn profile yet.", "warning");
+          setLoginFeedback("Login worked, but this account does not have a HopIn profile yet.", "warning");
           return;
         }
 

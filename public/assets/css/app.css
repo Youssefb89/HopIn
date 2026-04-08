@@ -81,6 +81,20 @@ a {
 .auth-shell {
   max-width: 1080px;
   margin: 0 auto;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 28%),
+    #ffffff;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.08);
+}
+
+.auth-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 24%),
+    radial-gradient(circle at right center, rgba(34, 197, 94, 0.08), transparent 22%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
 }
 
 .auth-grid {
@@ -91,13 +105,40 @@ a {
 
 .auth-form-card {
   border: 1px solid var(--hopin-border);
+  border-radius: 24px;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.04);
 }
 
 .auth-demo-card {
   padding: 1rem;
-  border-radius: 18px;
+  border-radius: 22px;
   border: 1px solid var(--hopin-border);
   background: #f8fafc;
+}
+
+.auth-hero-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(34, 197, 94, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  font-weight: 700;
+  color: var(--hopin-text);
+}
+
+.auth-hero-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb, #22c55e);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
 }
 
 .page-shell {

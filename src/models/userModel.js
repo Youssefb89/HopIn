@@ -172,6 +172,37 @@ exports.getByAuthUserId = async (authUserId) => {
   return data || null;
 };
 
+exports.create = async (userData) => {
+  if (!db) {
+    const newUser = {
+      id: userData.id || `mock-user-${Date.now()}`,
+      auth_user_id: userData.auth_user_id || null,
+      full_name: userData.full_name,
+      email: userData.email || null,
+      role: userData.role || "rider",
+      phone: userData.phone || null,
+      home_area: userData.home_area || null,
+      commute_notes: userData.commute_notes || null,
+      rating_avg: Number(userData.rating_avg || 0)
+    };
+
+    mockUsers.push(newUser);
+    return newUser;
+  }
+
+  const { data, error } = await db
+    .from("profiles")
+    .insert([userData])
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
 exports.update = async (userId, updates) => {
   if (!db) {
     const index = mockUsers.findIndex((item) => item.id === userId);

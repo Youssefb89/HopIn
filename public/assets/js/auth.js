@@ -120,6 +120,19 @@ function linkHopinProfile(profileId, authUserId, email) {
   });
 }
 
+function syncHopinProfile(profilePayload) {
+  return $.ajax({
+    url: "/api/auth/sync-profile",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify(profilePayload)
+  }).then(function (response) {
+    hopinAuthState.profile = response.data || null;
+    $(document).trigger("hopin:auth-changed", [hopinAuthState.user, hopinAuthState.profile]);
+    return hopinAuthState.profile;
+  });
+}
+
 window.HopinAuth = {
   waitForInit: initHopinAuth,
   getConfig: function () {
@@ -165,7 +178,7 @@ window.HopinAuth = {
     await resolveHopinAuthProfile();
     return result.data;
   },
-  signUpWithProfile: async function (profileId, email, password) {
+  signUpStandard: async function (profilePayload, password) {
     await initHopinAuth();
 
     if (!hopinAuthState.client) {
@@ -173,7 +186,7 @@ window.HopinAuth = {
     }
 
     var result = await hopinAuthState.client.auth.signUp({
-      email: email,
+      email: profilePayload.email,
       password: password
     });
 
@@ -185,7 +198,15 @@ window.HopinAuth = {
     hopinAuthState.user = result.data.user || null;
 
     if (result.data.user) {
-      await linkHopinProfile(profileId, result.data.user.id, result.data.user.email || email);
+      await syncHopinProfile({
+        profile_id: profilePayload.profile_id || null,
+        auth_user_id: result.data.user.id,
+        full_name: profilePayload.full_name,
+        email: result.data.user.email || profilePayload.email,
+        role: profilePayload.role || "rider",
+        phone: profilePayload.phone || null,
+        home_area: profilePayload.home_area || null
+      });
     }
 
     return result.data;

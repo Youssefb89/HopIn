@@ -45,3 +45,16 @@ exports.linkProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.syncProfileForAuth = async (req, res, next) => {
+  try {
+    const profile = await authService.syncProfileForAuth(req.body);
+
+    res.json({
+      success: true,
+      data: profile
+    });
+  } catch (error) {
+    next(error);
+  }
+};

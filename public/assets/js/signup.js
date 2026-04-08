@@ -1,24 +1,5 @@
 var hopinSignupUsers = [];
 
-function getSuggestedAuthEmail(profile) {
-  if (!profile) {
-    return "";
-  }
-
-  var currentEmail = String(profile.email || "").trim().toLowerCase();
-
-  if (currentEmail && !/@example\.com$/i.test(currentEmail)) {
-    return currentEmail;
-  }
-
-  var slug = String(profile.full_name || "hopin-user")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ".")
-    .replace(/^\.+|\.+$/g, "");
-
-  return slug + "@hopin-demo.app";
-}
-
 function setSignupFeedback(message, type) {
   if (!message) {
     $("#signup-feedback").empty();
@@ -30,29 +11,25 @@ function setSignupFeedback(message, type) {
   );
 }
 
-function fillSignupProfileEmail(profileId) {
-  var profile = hopinSignupUsers.find(function (item) {
-    return item.id === profileId;
-  });
-
-  $("#signup-email").val(getSuggestedAuthEmail(profile));
+function findSignupUserByName(name) {
+  return hopinSignupUsers.find(function (user) {
+    return user.full_name === name;
+  }) || null;
 }
 
-function renderSignupProfiles(users) {
-  hopinSignupUsers = users || [];
+function fillSignupDemo(profileName, email, password) {
+  var matchedUser = findSignupUserByName(profileName);
 
-  var options = ['<option value="">Select a profile</option>'].concat(
-    hopinSignupUsers.map(function (user) {
-      return (
-        '<option value="' + hopinEscapeHtml(user.id) + '">' +
-        hopinEscapeHtml(user.full_name) +
-        " (" + hopinEscapeHtml(user.role) + ")" +
-        "</option>"
-      );
-    })
-  );
+  $("#signup-profile-id").val(matchedUser ? matchedUser.id : "");
+  $("#signup-full-name").val(profileName);
+  $("#signup-email").val(email);
+  $("#signup-password").val(password);
+  $("#signup-password-confirm").val(password);
 
-  $("#signup-profile-id").html(options.join(""));
+  if (matchedUser) {
+    $("#signup-role").val(matchedUser.role || "rider");
+    $("#signup-home-area").val(matchedUser.home_area || "");
+  }
 }
 
 $(function () {
@@ -60,7 +37,7 @@ $(function () {
     window.HopinAuth.waitForInit(),
     window.HopinSession.waitForUsers()
   ]).then(function (results) {
-    renderSignupProfiles(results[1] || []);
+    hopinSignupUsers = results[1] || [];
 
     if (window.HopinAuth.getUser()) {
       setSignupFeedback("You are already signed in. Redirecting to the home page.", "success");
@@ -70,48 +47,38 @@ $(function () {
     }
   });
 
-  $("#signup-profile-id").on("change", function () {
-    fillSignupProfileEmail($(this).val());
-  });
-
   $(document).on("click", ".js-fill-signup-demo", function () {
-    var profileName = $(this).data("profileName");
-    var password = $(this).data("password");
-    var matchedUser = hopinSignupUsers.find(function (user) {
-      return user.full_name === profileName;
-    });
-
-    if (!matchedUser) {
-      return;
-    }
-
-    $("#signup-profile-id").val(matchedUser.id);
-    fillSignupProfileEmail(matchedUser.id);
-    $("#signup-password").val(password);
-    $("#signup-password-confirm").val(password);
+    fillSignupDemo(
+      $(this).data("profileName"),
+      $(this).data("email"),
+      $(this).data("password")
+    );
   });
 
   $("#signup-form").on("submit", function (event) {
     event.preventDefault();
     setSignupFeedback("", "info");
 
-    var profileId = $("#signup-profile-id").val();
-    var email = $("#signup-email").val().trim();
+    var profileId = $("#signup-profile-id").val() || null;
+    var fullName = $("#signup-full-name").val().trim();
+    var email = $("#signup-email").val().trim().toLowerCase();
     var password = $("#signup-password").val();
     var confirmPassword = $("#signup-password-confirm").val();
+    var role = $("#signup-role").val();
+    var homeArea = $("#signup-home-area").val().trim();
 
-    if (!profileId) {
-      setSignupFeedback("Choose a profile first.", "danger");
+    if (!fullName) {
+      setSignupFeedback("Full name is required.", "danger");
       return;
     }
 
     if (!email) {
-      setSignupFeedback("The selected profile needs an email address before signup.", "danger");
+      setSignupFeedback("Email is required.", "danger");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setSignupFeedback("Enter a valid email address for the auth account.", "danger");
+      setSignupFeedback("Enter a valid email address.", "danger");
       return;
     }
 
@@ -125,9 +92,18 @@ $(function () {
       return;
     }
 
-    window.HopinAuth.signUpWithProfile(profileId, email, password)
+    window.HopinAuth.signUpStandard({
+      profile_id: profileId,
+      full_name: fullName,
+      email: email,
+      role: role,
+      home_area: homeArea
+    }, password)
       .then(function () {
-        setSignupFeedback("Account created and linked successfully. Redirecting to home.", "success");
+        return window.HopinSession.refreshUsers();
+      })
+      .then(function () {
+        setSignupFeedback("Account created successfully. Redirecting to home.", "success");
         window.setTimeout(function () {
           window.location.href = "/";
         }, 900);

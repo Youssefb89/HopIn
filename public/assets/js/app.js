@@ -2,8 +2,7 @@ var HOPIN_CURRENT_USER_KEY = "hopinCurrentUserId";
 var hopinSessionState = {
   users: [],
   currentUser: null,
-  usersPromise: null,
-  authLocked: false
+  usersPromise: null
 };
 
 function loadSharedComponents() {
@@ -70,10 +69,6 @@ function findHopinUserById(userId) {
 }
 
 function setHopinCurrentUser(userId, shouldReload) {
-  if (hopinSessionState.authLocked) {
-    return hopinSessionState.currentUser;
-  }
-
   var matchedUser = findHopinUserById(userId);
 
   if (!matchedUser) {
@@ -108,7 +103,6 @@ function ensureHopinCurrentUser() {
 
     if (!users.length) {
       hopinSessionState.currentUser = null;
-      hopinSessionState.authLocked = false;
       renderHopinUserSwitcher();
       renderHopinAuthControls();
       return null;
@@ -119,7 +113,6 @@ function ensureHopinCurrentUser() {
 
       if (linkedUser) {
         hopinSessionState.currentUser = linkedUser;
-        hopinSessionState.authLocked = true;
         setStoredHopinCurrentUserId(linkedUser.id);
         renderHopinUserSwitcher();
         renderHopinAuthControls();
@@ -131,7 +124,6 @@ function ensureHopinCurrentUser() {
     var nextUser = findHopinUserById(storedUserId) || users[0];
 
     hopinSessionState.currentUser = nextUser;
-    hopinSessionState.authLocked = false;
     setStoredHopinCurrentUserId(nextUser.id);
     renderHopinUserSwitcher();
     renderHopinAuthControls();
@@ -150,17 +142,6 @@ function renderHopinUserSwitcher() {
   if (!hopinSessionState.users.length) {
     $select.html('<option value="">No users yet</option>').prop("disabled", true);
     $role.text("Add profiles in Supabase to switch users.");
-    return;
-  }
-
-  if (hopinSessionState.authLocked && hopinSessionState.currentUser) {
-    $select.html(
-      '<option value="' + hopinEscapeHtml(hopinSessionState.currentUser.id) + '">' +
-      hopinEscapeHtml(hopinSessionState.currentUser.full_name) +
-      "</option>"
-    ).prop("disabled", true);
-
-    $role.text("Locked to the signed-in profile.");
     return;
   }
 
@@ -189,40 +170,41 @@ function renderHopinUserSwitcher() {
 }
 
 function renderHopinAuthControls() {
-  var $statusLabel = $("#auth-status-label");
-  var $statusMeta = $("#auth-status-meta");
-  var $loginLink = $("#auth-login-link");
-  var $signupLink = $("#auth-signup-link");
   var $logoutButton = $("#auth-logout-button");
   var authUser = window.HopinAuth && window.HopinAuth.getUser
     ? window.HopinAuth.getUser()
     : null;
-  var authProfile = window.HopinAuth && window.HopinAuth.getProfile
-    ? window.HopinAuth.getProfile()
-    : null;
 
-  if (!$statusLabel.length) {
+  if (!$logoutButton.length) {
     return;
   }
 
   if (authUser) {
-    $statusLabel.text("Signed In");
-    $statusMeta.text(
-      (authProfile ? authProfile.full_name : authUser.email || "Account") +
-      " | " +
-      (authUser.email || "Auth active")
-    );
-    $loginLink.addClass("d-none-soft");
-    $signupLink.addClass("d-none-soft");
     $logoutButton.removeClass("d-none-soft");
     return;
   }
 
-  $statusLabel.text("Account");
-  $statusMeta.text("Use login/signup or keep testing with the profile switcher.");
-  $loginLink.removeClass("d-none-soft");
-  $signupLink.removeClass("d-none-soft");
   $logoutButton.addClass("d-none-soft");
+}
+
+function enforceHopinPageAccess() {
+  var currentPath = window.location.pathname;
+  var isAuthPage = currentPath === "/login" || currentPath === "/signup";
+  var authUser = window.HopinAuth && window.HopinAuth.getUser
+    ? window.HopinAuth.getUser()
+    : null;
+
+  if (!authUser && currentPath === "/") {
+    window.location.replace("/login");
+    return true;
+  }
+
+  if (authUser && isAuthPage) {
+    window.location.replace("/");
+    return true;
+  }
+
+  return false;
 }
 
 window.HopinSession = {
@@ -239,9 +221,6 @@ window.HopinSession = {
     return hopinSessionState.currentUser
       ? hopinSessionState.currentUser.id
       : getStoredHopinCurrentUserId();
-  },
-  isAuthLocked: function () {
-    return hopinSessionState.authLocked;
   },
   setCurrentUser: function (userId, shouldReload) {
     return fetchHopinUsers().then(function () {
@@ -398,6 +377,10 @@ function hopinGetRouteLatLng(origin, destination, rideSeed) {
 
 $(function () {
   Promise.all([loadSharedComponents(), window.HopinAuth ? window.HopinAuth.waitForInit() : Promise.resolve(), ensureHopinCurrentUser()]).then(function () {
+    if (enforceHopinPageAccess()) {
+      return;
+    }
+
     renderHopinUserSwitcher();
     renderHopinAuthControls();
   });
@@ -413,13 +396,7 @@ $(function () {
 
     window.HopinAuth.signOut()
       .then(function () {
-        hopinSessionState.authLocked = false;
-        return ensureHopinCurrentUser();
-      })
-      .then(function () {
-        if (window.location.pathname === "/login" || window.location.pathname === "/signup") {
-          window.location.href = "/";
-        }
+        window.location.href = "/login";
       })
       .catch(function (error) {
         window.alert(error.message || "Could not sign out.");
@@ -428,6 +405,10 @@ $(function () {
 
   $(document).on("hopin:auth-changed", function () {
     ensureHopinCurrentUser().then(function () {
+      if (enforceHopinPageAccess()) {
+        return;
+      }
+
       renderHopinUserSwitcher();
       renderHopinAuthControls();
     });

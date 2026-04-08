@@ -8,31 +8,45 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/app.css">
 </head>
-<body data-page="signup">
-  <div id="navbar-slot"></div>
-
+<body data-page="signup" class="auth-page">
   <main class="container page-shell">
     <section class="content-card auth-shell">
       <div class="auth-intro">
+        <div class="d-flex justify-content-end align-items-center flex-wrap gap-3 mb-3">
+          <a class="btn btn-outline-primary btn-sm" href="/login">Already have an account?</a>
+        </div>
+        <div class="auth-hero-mark mb-3">
+          <div class="auth-hero-icon">H</div>
+          <span>HopIn</span>
+        </div>
         <h1 class="page-title mb-2">Sign Up</h1>
-        <p class="placeholder-note mb-0">For now, signup links a new auth account to one of the existing HopIn profiles you already created.</p>
+        <p class="placeholder-note mb-0">Create a normal HopIn account. If your email matches an existing demo profile, it will connect to that profile. Otherwise a new profile will be created automatically.</p>
       </div>
 
       <div id="signup-feedback" class="mb-3"></div>
 
       <div class="auth-grid">
         <form id="signup-form" class="content-card auth-form-card">
-          <h2 class="section-title mb-3">Create Auth Login</h2>
+          <h2 class="section-title mb-3">Create Account</h2>
           <div class="mb-3">
-            <label class="form-label" for="signup-profile-id">Choose Existing Profile</label>
-            <select id="signup-profile-id" class="form-select" required>
-              <option value="">Select a profile</option>
-            </select>
+            <label class="form-label" for="signup-full-name">Full Name</label>
+            <input id="signup-full-name" class="form-control" type="text" required>
           </div>
           <div class="mb-3">
             <label class="form-label" for="signup-email">Email</label>
             <input id="signup-email" class="form-control" type="email" required>
-            <div class="form-text">You can change this if you want. A valid auth email will also update the linked profile email.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="signup-role">I want to</label>
+            <select id="signup-role" class="form-select">
+              <option value="rider">Find Rides</option>
+              <option value="driver">Offer Rides</option>
+              <option value="both">Do Both</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="signup-home-area">Home Area</label>
+            <input id="signup-home-area" class="form-control" type="text" placeholder="Albert Park">
           </div>
           <div class="mb-3">
             <label class="form-label" for="signup-password">Password</label>
@@ -42,6 +56,7 @@
             <label class="form-label" for="signup-password-confirm">Confirm Password</label>
             <input id="signup-password-confirm" class="form-control" type="password" minlength="8" required>
           </div>
+          <input id="signup-profile-id" type="hidden">
           <button class="btn btn-primary w-100" type="submit">Create Account</button>
         </form>
 
@@ -52,16 +67,16 @@
             <div class="ride-meta mt-1">Driver profile</div>
             <div class="ride-meta mt-1">Email: <code>alex.thompson@hopin-demo.app</code></div>
             <div class="ride-meta mt-1">Password: <code>HopInAlex123!</code></div>
-            <button class="btn btn-outline-primary btn-sm mt-3 js-fill-signup-demo" data-profile-name="Alex Thompson" data-password="HopInAlex123!" type="button">Fill Alex Demo</button>
+            <button class="btn btn-outline-primary btn-sm mt-3 js-fill-signup-demo" data-profile-name="Alex Thompson" data-email="alex.thompson@hopin-demo.app" data-password="HopInAlex123!" type="button">Fill Alex Demo</button>
           </div>
           <div class="auth-demo-card">
             <strong>Jamie Lee</strong>
             <div class="ride-meta mt-1">Rider profile</div>
             <div class="ride-meta mt-1">Email: <code>jamie.lee@hopin-demo.app</code></div>
             <div class="ride-meta mt-1">Password: <code>HopInJamie123!</code></div>
-            <button class="btn btn-outline-primary btn-sm mt-3 js-fill-signup-demo" data-profile-name="Jamie Lee" data-password="HopInJamie123!" type="button">Fill Jamie Demo</button>
+            <button class="btn btn-outline-primary btn-sm mt-3 js-fill-signup-demo" data-profile-name="Jamie Lee" data-email="jamie.lee@hopin-demo.app" data-password="HopInJamie123!" type="button">Fill Jamie Demo</button>
           </div>
-          <p class="placeholder-note mt-3 mb-0">Use these two to play with login first. After that you can create auth accounts for the other existing profiles too.</p>
+          <p class="placeholder-note mt-3 mb-0">These two match the demo profiles already in the project, so they are the easiest ones to test first.</p>
         </section>
       </div>
     </section>
