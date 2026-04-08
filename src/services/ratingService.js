@@ -1,4 +1,5 @@
 const ratingModel = require("../models/ratingModel");
+const userModel = require("../models/userModel");
 
 exports.createRating = async (ratingData) => {
   const payload = {
@@ -15,7 +16,14 @@ exports.createRating = async (ratingData) => {
     throw new Error("reviewer_id, reviewed_user_id, and score are required.");
   }
 
-  return ratingModel.create(payload);
+  const rating = await ratingModel.create(payload);
+  const nextAverage = await ratingModel.getAverageForUser(payload.reviewed_user_id);
+
+  await userModel.update(payload.reviewed_user_id, {
+    rating_avg: nextAverage
+  });
+
+  return rating;
 };
 
 exports.getRatingsForUser = async (userId) => {
@@ -25,4 +33,3 @@ exports.getRatingsForUser = async (userId) => {
 
   return ratingModel.getByUserId(userId);
 };
-

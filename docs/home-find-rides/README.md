@@ -55,7 +55,7 @@ It has:
 - search bar
 - filters
 - list view
-- map placeholder view
+- Leaflet map view
 
 The page loads rides from the database and then enriches them with:
 
@@ -85,7 +85,7 @@ It checks:
 - date
 - seats
 
-The map tab is currently a placeholder, but the ride list itself uses real data.
+The map tab now uses Leaflet with OpenStreetMap tiles and deterministic preview pin points for ride routes.
 
 ## Ride Details connection
 

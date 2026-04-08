@@ -87,19 +87,27 @@ This project is using only:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 
-## 4. Run the database SQL
+## 4. Run the required Supabase SQL
 
-Open Supabase SQL Editor and run:
+Open Supabase SQL Editor and run these in this order:
 
-- `supabase/schema.sql`
+1. `supabase/schema.sql`
+2. `supabase/seed.sql`
 
-If your schema was already created before the extra commute return time was added, also run:
+If you already created your database earlier and your local code is newer than that database, also run these small migration files if needed:
 
-- `supabase/add-schedule-return-time.sql`
+- `supabase/add-open-ride-request-declined-status.sql`
+- `supabase/allow-zero-seats-on-full-rides.sql`
+- `supabase/add-reports-table.sql`
+
+Fresh databases usually only need:
+
+- `schema.sql`
+- `seed.sql`
 
 ## 5. Disable RLS for now
 
-If Supabase auto-enabled Row Level Security, run this too:
+If Supabase auto-enabled Row Level Security, run this query too:
 
 ```sql
 alter table profiles disable row level security;
@@ -109,21 +117,105 @@ alter table booking_requests disable row level security;
 alter table open_ride_requests disable row level security;
 alter table messages disable row level security;
 alter table ratings disable row level security;
+alter table reports disable row level security;
 alter table schedules disable row level security;
 ```
 
-## 6. Add sample users
+## 6. Optional sample data for rides and vehicles
 
-Run:
+`seed.sql` only adds the 8 profiles.
 
-- `supabase/seed.sql`
+If you also want the app to show ride cards right away on Home, Find Ride, Ride Details, My Requests, and My Rides, add some vehicles and rides too.
 
-This adds the 8 profile rows used by the app.
+### Add 4 sample vehicles
 
-If you had older test data before, you can also use:
+```sql
+insert into vehicles (
+  user_id,
+  make,
+  model,
+  vehicle_year,
+  color,
+  license_plate,
+  seats_available
+)
+values
+  ('11111111-1111-4111-8111-111111111111', 'Toyota', 'Corolla', 2020, 'White', 'ABC 123', 3),
+  ('22222222-2222-4222-8222-222222222222', 'Honda', 'Civic', 2021, 'Black', 'DEF 456', 2),
+  ('33333333-3333-4333-8333-333333333333', 'Hyundai', 'Elantra', 2019, 'Blue', 'GHI 789', 3),
+  ('44444444-4444-4444-8444-444444444444', 'Mazda', 'CX-5', 2022, 'Grey', 'JKL 321', 1);
+```
 
-- `supabase/clear-non-profile-data.sql`
-- `supabase/remove-old-9th-user.sql`
+### Add 4 sample rides
+
+```sql
+insert into rides (
+  driver_id,
+  vehicle_id,
+  origin,
+  destination,
+  ride_date,
+  ride_time,
+  seats_available,
+  notes,
+  status
+)
+values
+  (
+    '11111111-1111-4111-8111-111111111111',
+    null,
+    'Albert Park',
+    'University of Regina',
+    '2026-03-20',
+    '07:45',
+    3,
+    'Morning campus ride. Pickup near the main Albert Park area.',
+    'open'
+  ),
+  (
+    '22222222-2222-4222-8222-222222222222',
+    null,
+    'Normanview',
+    'Downtown',
+    '2026-03-20',
+    '08:15',
+    2,
+    'Weekday downtown commute with one short pickup stop.',
+    'open'
+  ),
+  (
+    '33333333-3333-4333-8333-333333333333',
+    null,
+    'Harbour Landing',
+    'Wascana Centre',
+    '2026-03-21',
+    '09:00',
+    3,
+    'Late morning ride with flexible drop-off nearby.',
+    'open'
+  ),
+  (
+    '44444444-4444-4444-8444-444444444444',
+    null,
+    'Lakeview',
+    'University of Regina',
+    '2026-03-22',
+    '13:30',
+    1,
+    'Afternoon ride for students heading toward campus.',
+    'open'
+  );
+```
+
+### Link rides to each driver's vehicle
+
+```sql
+update rides
+set vehicle_id = vehicles.id
+from vehicles
+where rides.driver_id = vehicles.user_id
+  and rides.vehicle_id is null;
+```
 
 ## 7. Start the project
 

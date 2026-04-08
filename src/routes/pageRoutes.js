@@ -12,5 +12,7 @@ router.get("/ride-details", pageController.getRideDetailsPage);
 router.get("/profile-settings", pageController.getProfileSettingsPage);
 router.get("/vehicle-settings", pageController.getVehicleSettingsPage);
 router.get("/messages", pageController.getMessagesPage);
+router.get("/login", pageController.getLoginPage);
+router.get("/signup", pageController.getSignupPage);
 
 module.exports = router;

@@ -27,3 +27,18 @@ exports.getMessages = async (req, res, next) => {
   }
 };
 
+exports.getConversations = async (req, res, next) => {
+  try {
+    const conversations = await messageService.getConversationsForUser(
+      req.query.userId
+    );
+
+    res.json({
+      success: true,
+      count: conversations.length,
+      data: conversations
+    });
+  } catch (error) {
+    next(error);
+  }
+};

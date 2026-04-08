@@ -43,3 +43,14 @@ exports.getByUserId = async (userId) => {
 
   return data || [];
 };
+
+exports.getAverageForUser = async (userId) => {
+  const ratings = await exports.getByUserId(userId);
+
+  if (!ratings.length) {
+    return 0;
+  }
+
+  const total = ratings.reduce((sum, item) => sum + Number(item.score || 0), 0);
+  return Number((total / ratings.length).toFixed(1));
+};

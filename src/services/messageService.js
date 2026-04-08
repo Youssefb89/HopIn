@@ -1,8 +1,12 @@
 const messageModel = require("../models/messageModel");
 const rideRequestModel = require("../models/rideRequestModel");
 
+function isUnlockedConversation(conversation) {
+  return conversation && conversation.status === "accepted";
+}
+
 function ensureAcceptedAndAllowedParticipants(messageData, conversation) {
-  if (!conversation || conversation.status !== "accepted") {
+  if (!isUnlockedConversation(conversation)) {
     throw new Error("Messages are only allowed after a request has been accepted.");
   }
 
@@ -28,6 +32,57 @@ function ensureAcceptedAndAllowedParticipants(messageData, conversation) {
   if (!senderAllowed || !receiverAllowed) {
     throw new Error("Only the accepted rider and driver can send messages.");
   }
+}
+
+function buildBookingConversation(item, userId) {
+  const ride = item.ride_details || {};
+  const isRider = item.rider_id === userId;
+  const partner = isRider ? item.driver_details : item.rider_details;
+
+  return {
+    id: `booking:${item.id}`,
+    type: "booking_request",
+    booking_request_id: item.id,
+    open_ride_request_id: null,
+    ride_id: ride.id || null,
+    partner_id: partner ? partner.id : null,
+    partner_name: partner && partner.full_name ? partner.full_name : "HopIn User",
+    partner_role: isRider ? "Driver" : "Rider",
+    origin: ride.origin || "Origin pending",
+    destination: ride.destination || "Destination pending",
+    ride_date: ride.ride_date || null,
+    ride_time: ride.ride_time || null,
+    status: item.status,
+    updated_at: item.updated_at || item.created_at || null,
+    helper_text: isRider
+      ? "Chat with the driver about this accepted ride."
+      : "Chat with the rider for this accepted booking."
+  };
+}
+
+function buildOpenRideConversation(item, userId) {
+  const isRider = item.rider_id === userId;
+  const partner = isRider ? item.accepted_driver_details : item.rider_details;
+
+  return {
+    id: `open:${item.id}`,
+    type: "open_ride_request",
+    booking_request_id: null,
+    open_ride_request_id: item.id,
+    ride_id: null,
+    partner_id: partner ? partner.id : null,
+    partner_name: partner && partner.full_name ? partner.full_name : "HopIn User",
+    partner_role: isRider ? "Driver" : "Rider",
+    origin: item.origin || "Origin pending",
+    destination: item.destination || "Destination pending",
+    ride_date: item.ride_date || null,
+    ride_time: item.ride_time || null,
+    status: item.status,
+    updated_at: item.updated_at || item.created_at || null,
+    helper_text: isRider
+      ? "Chat with the driver who accepted your ride request."
+      : "Chat with the rider whose request you accepted."
+  };
 }
 
 exports.createMessage = async (messageData) => {
@@ -78,8 +133,19 @@ exports.getMessages = async (filters) => {
       filters.booking_request_id
     );
 
-    if (!bookingRequest || bookingRequest.status !== "accepted") {
+    if (!isUnlockedConversation(bookingRequest)) {
       throw new Error("Messages are only available after a booking request is accepted.");
+    }
+
+    if (filters.current_user_id) {
+      ensureAcceptedAndAllowedParticipants(
+        {
+          sender_id: filters.current_user_id,
+          receiver_id: filters.current_user_id,
+          booking_request_id: filters.booking_request_id
+        },
+        bookingRequest
+      );
     }
   }
 
@@ -88,11 +154,63 @@ exports.getMessages = async (filters) => {
       filters.open_ride_request_id
     );
 
-    if (!openRideRequest || openRideRequest.status !== "accepted") {
+    if (!isUnlockedConversation(openRideRequest)) {
       throw new Error("Messages are only available after an open ride request is accepted.");
+    }
+
+    if (filters.current_user_id) {
+      ensureAcceptedAndAllowedParticipants(
+        {
+          sender_id: filters.current_user_id,
+          receiver_id: filters.current_user_id,
+          open_ride_request_id: filters.open_ride_request_id
+        },
+        openRideRequest
+      );
     }
   }
 
   return messageModel.getByConversation(filters);
 };
 
+exports.getConversationsForUser = async (userId) => {
+  if (!userId) {
+    throw new Error("userId is required.");
+  }
+
+  const riderBookingRequests = await rideRequestModel.getBookingRequestsByRider(userId);
+  const driverBookingRequests = await rideRequestModel.getIncomingBookingRequestsForDriver(userId);
+  const riderOpenRequests = await rideRequestModel.getOpenRideRequests({ riderId: userId });
+  const driverOpenRequests = await rideRequestModel.getIncomingOpenRideRequestsForDriver(userId);
+  const conversationsById = {};
+
+  riderBookingRequests
+    .filter(isUnlockedConversation)
+    .forEach((item) => {
+      conversationsById[`booking:${item.id}`] = buildBookingConversation(item, userId);
+    });
+
+  driverBookingRequests
+    .filter(isUnlockedConversation)
+    .forEach((item) => {
+      conversationsById[`booking:${item.id}`] = buildBookingConversation(item, userId);
+    });
+
+  riderOpenRequests
+    .filter(isUnlockedConversation)
+    .forEach((item) => {
+      conversationsById[`open:${item.id}`] = buildOpenRideConversation(item, userId);
+    });
+
+  driverOpenRequests
+    .filter((item) => isUnlockedConversation(item) && item.accepted_driver_id === userId)
+    .forEach((item) => {
+      conversationsById[`open:${item.id}`] = buildOpenRideConversation(item, userId);
+    });
+
+  return Object.values(conversationsById).sort((firstItem, secondItem) => {
+    const firstDate = new Date(firstItem.updated_at || 0).getTime();
+    const secondDate = new Date(secondItem.updated_at || 0).getTime();
+    return secondDate - firstDate;
+  });
+};

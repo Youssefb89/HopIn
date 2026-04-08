@@ -37,7 +37,8 @@ exports.updateBookingRequestStatus = async (req, res, next) => {
   try {
     const request = await rideRequestService.updateBookingRequestStatus(
       req.params.requestId,
-      req.body.status
+      req.body.status,
+      req.body.actor_user_id
     );
 
     res.json({

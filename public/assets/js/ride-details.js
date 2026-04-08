@@ -23,6 +23,30 @@ function getRideStageIndex(status) {
   return 1;
 }
 
+function getRequestStatusSummary(status, actorName) {
+  if (status === "accepted") {
+    return "Your request has been accepted" + (actorName ? " by " + actorName : "") + ".";
+  }
+
+  if (status === "declined") {
+    return "Your request was declined" + (actorName ? " by " + actorName : "") + ".";
+  }
+
+  if (status === "requested") {
+    return "Your request is still waiting for a driver response.";
+  }
+
+  if (status === "ignored") {
+    return "Your request was ignored for now.";
+  }
+
+  if (status === "cancelled") {
+    return "This request was cancelled and is no longer active.";
+  }
+
+  return "";
+}
+
 function setRideDetailFeedback(message, type) {
   if (!message) {
     $("#ride-detail-feedback").empty();
@@ -89,19 +113,108 @@ function renderPersonCard(title, name, subtitle, location, rating) {
 
 function renderMapCard(origin, destination, rideDate, rideTime) {
   return (
-    '<div class="map-placeholder find-map-placeholder detail-map mb-4">' +
-    '<div class="find-map-placeholder-copy">' +
-    '<h2 class="section-title mb-2">Map Placeholder</h2>' +
-    '<p class="placeholder-note mb-3">A live route map can be connected later.</p>' +
-    '<div class="find-map-route-list">' +
+    '<div class="map-placeholder detail-map mb-4 static-route-map">' +
+    '<div id="ride-detail-map-canvas" class="leaflet-map-canvas detail-leaflet-map"></div>' +
+    '<div class="detail-map-meta">' +
     '<div class="find-map-route-item">' +
     '<div><strong>' + hopinEscapeHtml(origin) + '</strong> to <strong>' + hopinEscapeHtml(destination) + "</strong></div>" +
     '<div class="ride-meta">' + hopinEscapeHtml(hopinFormatDateLabel(rideDate)) + " | " + hopinEscapeHtml(hopinFormatTimeLabel(rideTime)) + "</div>" +
     "</div>" +
     "</div>" +
-    "</div>" +
     "</div>"
   );
+}
+
+var rideDetailLeafletMap = null;
+var rideDetailLeafletLayers = [];
+
+function resetRideDetailMap() {
+  if (rideDetailLeafletMap) {
+    rideDetailLeafletMap.remove();
+    rideDetailLeafletMap = null;
+  }
+
+  rideDetailLeafletLayers = [];
+}
+
+function clearRideDetailMapLayers() {
+  if (!rideDetailLeafletMap || !rideDetailLeafletLayers.length) {
+    return;
+  }
+
+  rideDetailLeafletLayers.forEach(function (layer) {
+    rideDetailLeafletMap.removeLayer(layer);
+  });
+
+  rideDetailLeafletLayers = [];
+}
+
+function ensureRideDetailMap() {
+  var container = document.getElementById("ride-detail-map-canvas");
+
+  if (
+    rideDetailLeafletMap &&
+    (!container || rideDetailLeafletMap.getContainer() !== container)
+  ) {
+    resetRideDetailMap();
+  }
+
+  if (rideDetailLeafletMap || typeof L === "undefined") {
+    return;
+  }
+
+  rideDetailLeafletMap = L.map("ride-detail-map-canvas", {
+    zoomControl: true,
+    attributionControl: true
+  }).setView([50.4452, -104.6189], 12);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(rideDetailLeafletMap);
+}
+
+function renderRideDetailMap(origin, destination, rideSeed) {
+  ensureRideDetailMap();
+
+  if (!rideDetailLeafletMap) {
+    return;
+  }
+
+  clearRideDetailMapLayers();
+
+  var routeLatLng = hopinGetRouteLatLng(origin, destination, rideSeed || origin + ":" + destination);
+  var polyline = L.polyline([routeLatLng.origin, routeLatLng.destination], {
+    color: "#2563eb",
+    weight: 5,
+    opacity: 0.88
+  }).addTo(rideDetailLeafletMap);
+  var originMarker = L.circleMarker(routeLatLng.origin, {
+    radius: 8,
+    color: "#ffffff",
+    weight: 2,
+    fillColor: "#10b981",
+    fillOpacity: 1
+  }).bindTooltip(origin, { direction: "top" }).addTo(rideDetailLeafletMap);
+  var destinationMarker = L.circleMarker(routeLatLng.destination, {
+    radius: 8,
+    color: "#ffffff",
+    weight: 2,
+    fillColor: "#1d4ed8",
+    fillOpacity: 1
+  }).bindTooltip(destination, { direction: "top" }).addTo(rideDetailLeafletMap);
+
+  rideDetailLeafletLayers = [polyline, originMarker, destinationMarker];
+
+  rideDetailLeafletMap.fitBounds([routeLatLng.origin, routeLatLng.destination], {
+    padding: [32, 32]
+  });
+
+  window.setTimeout(function () {
+    if (rideDetailLeafletMap) {
+      rideDetailLeafletMap.invalidateSize();
+    }
+  }, 60);
 }
 
 function getRideActionState(ride, currentUser, existingBookingRequest) {
@@ -127,7 +240,8 @@ function getRideActionState(ride, currentUser, existingBookingRequest) {
 
   if (existingBookingRequest) {
     return {
-      mode: "existing"
+      mode: "existing",
+      status: existingBookingRequest.status
     };
   }
 
@@ -152,8 +266,26 @@ function renderRideActionButtons(ride, actionState) {
   }
 
   if (actionState.mode === "existing") {
+    if (actionState.status === "accepted") {
+      return (
+        '<a class="btn btn-primary" href="/my-rides?view=rider">View in My Rides</a>' +
+        '<a class="btn btn-outline-secondary" href="/my-requests?view=rider">Open My Requests</a>'
+      );
+    }
+
+    if (
+      actionState.status === "declined" ||
+      actionState.status === "ignored" ||
+      actionState.status === "cancelled"
+    ) {
+      return (
+        '<button class="btn btn-outline-secondary" type="button" disabled>Request Closed</button>' +
+        '<a class="btn btn-primary" href="/my-requests?view=rider">Open My Requests</a>'
+      );
+    }
+
     return (
-      '<button class="btn btn-outline-secondary" type="button" disabled>Request Already Sent</button>' +
+      '<button class="btn btn-outline-secondary" type="button" disabled>Request Pending</button>' +
       '<a class="btn btn-primary" href="/my-requests?view=rider">Open My Requests</a>'
     );
   }
@@ -205,9 +337,14 @@ function renderRideDetails(ride, driver, vehicle, currentUser, existingBookingRe
   var seatsText = ride.seats_available === 1 ? "1 seat available" : ride.seats_available + " seats available";
   var notesText = ride.notes || "No additional ride notes yet.";
   var actionState = getRideActionState(ride, currentUser, existingBookingRequest);
+  var displayStatus = existingBookingRequest ? existingBookingRequest.status : ride.status;
+  var requestSummary = existingBookingRequest
+    ? getRequestStatusSummary(existingBookingRequest.status, driverName)
+    : "";
 
-  setDetailHeader("Ride Details", ride.status, "/find-ride", "\u2190 Back to Find Ride");
+  setDetailHeader("Ride Details", displayStatus, "/find-ride", "\u2190 Back to Find Ride");
   setRideDetailFeedback("");
+  resetRideDetailMap();
 
   $("#ride-detail-content").html(
     renderMapCard(ride.origin, ride.destination, ride.ride_date, ride.ride_time) +
@@ -219,7 +356,10 @@ function renderRideDetails(ride, driver, vehicle, currentUser, existingBookingRe
       ride.ride_date,
       ride.ride_time,
       '<span class="card-detail-item">' + hopinEscapeHtml(seatsText) + "</span>" +
-      '<span class="card-detail-item">Free shared ride</span>'
+      '<span class="card-detail-item">Free shared ride</span>' +
+      (requestSummary
+        ? '<span class="card-detail-item">' + hopinEscapeHtml(requestSummary) + "</span>"
+        : "")
     ) +
     '<section class="content-card mb-4">' +
     '<h2 class="section-title mb-3">Ride Notes</h2>' +
@@ -240,6 +380,8 @@ function renderRideDetails(ride, driver, vehicle, currentUser, existingBookingRe
     "</div>" +
     "</div>"
   );
+
+  renderRideDetailMap(ride.origin, ride.destination, ride.id);
 }
 
 function renderOpenRequestDetails(request, rider, driver) {
@@ -250,6 +392,15 @@ function renderOpenRequestDetails(request, rider, driver) {
   var notesText = request.notes || "No additional request notes yet.";
   var acceptedDriverName = driver && driver.full_name ? driver.full_name : "Waiting for driver";
   var acceptedDriverRating = driver && driver.rating_avg ? "Rating " + driver.rating_avg : "";
+  var driverResponseSubtitle = "No driver accepted yet";
+
+  if (request.status === "accepted") {
+    driverResponseSubtitle = "Accepted this rider request";
+  }
+
+  if (request.status === "declined") {
+    driverResponseSubtitle = "Declined this rider request";
+  }
 
   setDetailHeader(
     "Ride Request Details",
@@ -257,6 +408,7 @@ function renderOpenRequestDetails(request, rider, driver) {
     "/my-requests?view=rider",
     "\u2190 Back to My Requests"
   );
+  resetRideDetailMap();
 
   $("#ride-detail-content").html(
     renderMapCard(request.origin, request.destination, request.ride_date, request.ride_time) +
@@ -284,9 +436,9 @@ function renderOpenRequestDetails(request, rider, driver) {
       rider && rider.rating_avg ? "Rating " + rider.rating_avg : ""
     ) +
     renderPersonCard(
-      "Accepted Driver",
+      "Driver Response",
       acceptedDriverName,
-      driver && driver.commute_notes ? driver.commute_notes : "No driver accepted yet",
+      driver && driver.commute_notes ? driver.commute_notes : driverResponseSubtitle,
       driver && driver.home_area ? driver.home_area : "Pending",
       acceptedDriverRating
     ) +
@@ -297,6 +449,8 @@ function renderOpenRequestDetails(request, rider, driver) {
     "</div>" +
     "</div>"
   );
+
+  renderRideDetailMap(request.origin, request.destination, request.id);
 }
 
 async function loadRideDetails() {

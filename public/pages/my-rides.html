@@ -12,18 +12,20 @@
   <div id="navbar-slot"></div>
 
   <main class="container page-shell">
-    <div class="content-card mb-4">
+    <section class="content-card page-hero-card mb-4">
       <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
         <div>
           <h1 class="page-title mb-1">My Rides</h1>
-          <p class="placeholder-note mb-0">Switch between rider view and driver view. The current user comes from the navbar dropdown.</p>
+          <p class="placeholder-note mb-0">Track accepted rides, posted rides, and the next actions for the current profile.</p>
         </div>
         <div class="view-toggle">
           <button class="btn btn-sm btn-light js-view-switch" data-view="rider" type="button">Rider View</button>
           <button class="btn btn-sm btn-light js-view-switch" data-view="driver" type="button">Driver View</button>
         </div>
       </div>
-    </div>
+      <div id="my-rides-hero-copy" class="placeholder-note mt-3 mb-0"></div>
+      <div id="my-rides-summary" class="summary-grid mt-4"></div>
+    </section>
 
     <div id="my-rides-feedback" class="mb-3"></div>
     <div id="my-rides-actions" class="mb-4"></div>
@@ -32,6 +34,8 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/auth.js"></script>
   <script src="/assets/js/app.js"></script>
   <script src="/assets/js/my-rides.js"></script>
 </body>

@@ -217,6 +217,33 @@ exports.updateBookingRequestStatus = async (requestId, status) => {
   return data;
 };
 
+exports.updateBookingRequestsStatusByRide = async (
+  rideId,
+  currentStatuses,
+  nextStatus
+) => {
+  if (!db) {
+    throw new Error("Supabase connection is required to update booking requests.");
+  }
+
+  let query = db
+    .from("booking_requests")
+    .update({ status: nextStatus })
+    .eq("ride_id", rideId);
+
+  if (currentStatuses && currentStatuses.length) {
+    query = query.in("status", currentStatuses);
+  }
+
+  const { data, error } = await query.select("*");
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+};
+
 exports.getOpenRideRequestById = async (requestId) => {
   if (!db) {
     const items = await attachOpenRequestContext(

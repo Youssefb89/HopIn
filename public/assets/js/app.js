@@ -2,7 +2,8 @@ var HOPIN_CURRENT_USER_KEY = "hopinCurrentUserId";
 var hopinSessionState = {
   users: [],
   currentUser: null,
-  usersPromise: null
+  usersPromise: null,
+  authLocked: false
 };
 
 function loadSharedComponents() {
@@ -69,6 +70,10 @@ function findHopinUserById(userId) {
 }
 
 function setHopinCurrentUser(userId, shouldReload) {
+  if (hopinSessionState.authLocked) {
+    return hopinSessionState.currentUser;
+  }
+
   var matchedUser = findHopinUserById(userId);
 
   if (!matchedUser) {
@@ -88,19 +93,48 @@ function setHopinCurrentUser(userId, shouldReload) {
 }
 
 function ensureHopinCurrentUser() {
-  return fetchHopinUsers().then(function (users) {
+  var authReady = window.HopinAuth && window.HopinAuth.waitForInit
+    ? window.HopinAuth.waitForInit().catch(function () {
+      return null;
+    })
+    : Promise.resolve();
+
+  return authReady.then(function () {
+    return fetchHopinUsers();
+  }).then(function (users) {
+    var authProfile = window.HopinAuth && window.HopinAuth.getProfile
+      ? window.HopinAuth.getProfile()
+      : null;
+
     if (!users.length) {
       hopinSessionState.currentUser = null;
+      hopinSessionState.authLocked = false;
       renderHopinUserSwitcher();
+      renderHopinAuthControls();
       return null;
+    }
+
+    if (authProfile) {
+      var linkedUser = findHopinUserById(authProfile.id);
+
+      if (linkedUser) {
+        hopinSessionState.currentUser = linkedUser;
+        hopinSessionState.authLocked = true;
+        setStoredHopinCurrentUserId(linkedUser.id);
+        renderHopinUserSwitcher();
+        renderHopinAuthControls();
+        return linkedUser;
+      }
     }
 
     var storedUserId = getStoredHopinCurrentUserId();
     var nextUser = findHopinUserById(storedUserId) || users[0];
 
     hopinSessionState.currentUser = nextUser;
+    hopinSessionState.authLocked = false;
     setStoredHopinCurrentUserId(nextUser.id);
     renderHopinUserSwitcher();
+    renderHopinAuthControls();
     return nextUser;
   });
 }
@@ -116,6 +150,17 @@ function renderHopinUserSwitcher() {
   if (!hopinSessionState.users.length) {
     $select.html('<option value="">No users yet</option>').prop("disabled", true);
     $role.text("Add profiles in Supabase to switch users.");
+    return;
+  }
+
+  if (hopinSessionState.authLocked && hopinSessionState.currentUser) {
+    $select.html(
+      '<option value="' + hopinEscapeHtml(hopinSessionState.currentUser.id) + '">' +
+      hopinEscapeHtml(hopinSessionState.currentUser.full_name) +
+      "</option>"
+    ).prop("disabled", true);
+
+    $role.text("Locked to the signed-in profile.");
     return;
   }
 
@@ -143,6 +188,43 @@ function renderHopinUserSwitcher() {
   }
 }
 
+function renderHopinAuthControls() {
+  var $statusLabel = $("#auth-status-label");
+  var $statusMeta = $("#auth-status-meta");
+  var $loginLink = $("#auth-login-link");
+  var $signupLink = $("#auth-signup-link");
+  var $logoutButton = $("#auth-logout-button");
+  var authUser = window.HopinAuth && window.HopinAuth.getUser
+    ? window.HopinAuth.getUser()
+    : null;
+  var authProfile = window.HopinAuth && window.HopinAuth.getProfile
+    ? window.HopinAuth.getProfile()
+    : null;
+
+  if (!$statusLabel.length) {
+    return;
+  }
+
+  if (authUser) {
+    $statusLabel.text("Signed In");
+    $statusMeta.text(
+      (authProfile ? authProfile.full_name : authUser.email || "Account") +
+      " | " +
+      (authUser.email || "Auth active")
+    );
+    $loginLink.addClass("d-none-soft");
+    $signupLink.addClass("d-none-soft");
+    $logoutButton.removeClass("d-none-soft");
+    return;
+  }
+
+  $statusLabel.text("Account");
+  $statusMeta.text("Use login/signup or keep testing with the profile switcher.");
+  $loginLink.removeClass("d-none-soft");
+  $signupLink.removeClass("d-none-soft");
+  $logoutButton.addClass("d-none-soft");
+}
+
 window.HopinSession = {
   waitForUsers: fetchHopinUsers,
   refreshUsers: refreshHopinUsers,
@@ -157,6 +239,9 @@ window.HopinSession = {
     return hopinSessionState.currentUser
       ? hopinSessionState.currentUser.id
       : getStoredHopinCurrentUserId();
+  },
+  isAuthLocked: function () {
+    return hopinSessionState.authLocked;
   },
   setCurrentUser: function (userId, shouldReload) {
     return fetchHopinUsers().then(function () {
@@ -227,12 +312,124 @@ function hopinGetInitials(name) {
     .join("");
 }
 
+function hopinGetScheduledDateTime(dateValue, timeValue) {
+  if (!dateValue || !timeValue) {
+    return null;
+  }
+
+  var normalizedTime = String(timeValue).slice(0, 8);
+  var parsedDate = new Date(dateValue + "T" + normalizedTime);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
+}
+
+function hopinHasScheduledTimePassed(dateValue, timeValue) {
+  var scheduledDate = hopinGetScheduledDateTime(dateValue, timeValue);
+
+  if (!scheduledDate) {
+    return false;
+  }
+
+  return scheduledDate.getTime() <= Date.now();
+}
+
+function hopinHashText(value) {
+  var text = String(value || "");
+  var hash = 0;
+  var index = 0;
+
+  for (index = 0; index < text.length; index += 1) {
+    hash = (hash << 5) - hash + text.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return Math.abs(hash);
+}
+
+function hopinGetStaticMapPoint(seed, variant) {
+  var hash = hopinHashText(seed + ":" + variant);
+  var left = 12 + (hash % 72);
+  var top = 16 + (Math.floor(hash / 13) % 58);
+
+  return {
+    left: left,
+    top: top
+  };
+}
+
+function hopinGetStaticLatLng(seed, variant) {
+  var hash = hopinHashText(seed + ":" + variant);
+  var latBase = 50.4452;
+  var lngBase = -104.6189;
+  var latOffset = ((hash % 1800) / 10000) - 0.09;
+  var lngOffset = ((Math.floor(hash / 7) % 2200) / 10000) - 0.11;
+
+  return [latBase + latOffset, lngBase + lngOffset];
+}
+
+function hopinGetRouteLatLng(origin, destination, rideSeed) {
+  var originLatLng = hopinGetStaticLatLng(
+    String(rideSeed || "") + ":" + String(origin || ""),
+    "origin"
+  );
+  var destinationLatLng = hopinGetStaticLatLng(
+    String(rideSeed || "") + ":" + String(destination || ""),
+    "destination"
+  );
+  var latGap = Math.abs(originLatLng[0] - destinationLatLng[0]);
+  var lngGap = Math.abs(originLatLng[1] - destinationLatLng[1]);
+
+  if (latGap < 0.01 && lngGap < 0.01) {
+    destinationLatLng = [
+      destinationLatLng[0] + 0.018,
+      destinationLatLng[1] - 0.022
+    ];
+  }
+
+  return {
+    origin: originLatLng,
+    destination: destinationLatLng
+  };
+}
+
 $(function () {
-  Promise.all([loadSharedComponents(), ensureHopinCurrentUser()]).then(function () {
+  Promise.all([loadSharedComponents(), window.HopinAuth ? window.HopinAuth.waitForInit() : Promise.resolve(), ensureHopinCurrentUser()]).then(function () {
     renderHopinUserSwitcher();
+    renderHopinAuthControls();
   });
 
   $(document).on("change", "#current-user-select", function () {
     window.HopinSession.setCurrentUser($(this).val(), true);
+  });
+
+  $(document).on("click", "#auth-logout-button", function () {
+    if (!window.HopinAuth) {
+      return;
+    }
+
+    window.HopinAuth.signOut()
+      .then(function () {
+        hopinSessionState.authLocked = false;
+        return ensureHopinCurrentUser();
+      })
+      .then(function () {
+        if (window.location.pathname === "/login" || window.location.pathname === "/signup") {
+          window.location.href = "/";
+        }
+      })
+      .catch(function (error) {
+        window.alert(error.message || "Could not sign out.");
+      });
+  });
+
+  $(document).on("hopin:auth-changed", function () {
+    ensureHopinCurrentUser().then(function () {
+      renderHopinUserSwitcher();
+      renderHopinAuthControls();
+    });
   });
 });

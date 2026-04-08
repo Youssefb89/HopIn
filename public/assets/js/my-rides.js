@@ -1,5 +1,7 @@
 var currentRideView = "rider";
 var pendingRideAction = "";
+var myRideVehicleMap = {};
+var myRideCurrentData = null;
 
 function getRideQueryValue(name) {
   var params = new URLSearchParams(window.location.search);
@@ -58,6 +60,26 @@ function getRideStatusBadge(status) {
     hopinEscapeHtml(safeStatus.replace(/_/g, " ")) +
     "</span>"
   );
+}
+
+function getRideStatusCopy(status) {
+  if (status === "accepted") {
+    return "Accepted";
+  }
+
+  if (status === "full") {
+    return "Full";
+  }
+
+  if (status === "completed") {
+    return "Completed";
+  }
+
+  if (status === "cancelled") {
+    return "Cancelled";
+  }
+
+  return "Open";
 }
 
 function getRideEmptyState(message) {
@@ -142,6 +164,7 @@ function renderJourneyCard(options) {
     '<div class="ride-meta">' + hopinEscapeHtml(options.footerText) + "</div>" +
     '<div class="card-actions">' + options.buttonsHtml + "</div>" +
     "</div>" +
+    (options.extraContentHtml || "") +
     "</div>"
   );
 }
@@ -186,16 +209,45 @@ function getRidePersonInfo(item, source) {
   };
 }
 
-function renderRideCard(item, typeLabel) {
+function getVehicleLabelById(vehicleId) {
+  if (!vehicleId || !myRideVehicleMap[vehicleId]) {
+    return "";
+  }
+
+  var vehicle = myRideVehicleMap[vehicleId];
+
+  return [
+    vehicle.vehicle_year,
+    vehicle.make,
+    vehicle.model,
+    "-",
+    vehicle.color
+  ].filter(Boolean).join(" ");
+}
+
+function getMessagesHref(item) {
+  if (item.ride_details && item.id) {
+    return "/messages?bookingRequestId=" + item.id;
+  }
+
+  return "/messages?openRideRequestId=" + item.id;
+}
+
+function renderRideCard(item, typeLabel, extraButtonsHtml, extraContentHtml) {
   var source = item.ride_details || item;
   var seatText = source.seats_available !== undefined
     ? (source.seats_available === 1 ? "1 seat available" : source.seats_available + " seats available")
     : (source.seats_needed === 1 ? "1 seat needed" : source.seats_needed + " seats needed");
   var details = ['<span class="card-detail-item">' + hopinEscapeHtml(seatText) + "</span>"];
   var personInfo = getRidePersonInfo(item, source);
+  var statusLabel = getRideStatusCopy(item.status || source.status || "open");
+  var vehicleLabel = getVehicleLabelById(source.vehicle_id);
   var footerText = currentRideView === "driver"
     ? "Manage this ride from My Requests when riders respond."
     : "Keep an eye on timing and meeting point details.";
+  var buttons = [
+    '<a class="btn btn-outline-primary btn-sm" href="' + getRideDetailHref(item) + '">View Details</a>'
+  ];
 
   if (item.seats_requested) {
     details.push(
@@ -203,6 +255,52 @@ function renderRideCard(item, typeLabel) {
       hopinEscapeHtml(item.seats_requested + (item.seats_requested === 1 ? " seat booked" : " seats booked")) +
       "</span>"
     );
+  }
+
+  if (vehicleLabel) {
+    details.push(
+      '<span class="card-detail-item">' + hopinEscapeHtml(vehicleLabel) + "</span>"
+    );
+  }
+
+  if (currentRideView === "driver" && source.accepted_booking_count) {
+    details.push(
+      '<span class="card-detail-item">' +
+      hopinEscapeHtml(
+        source.accepted_booking_count +
+          (source.accepted_booking_count === 1 ? " rider confirmed" : " riders confirmed")
+      ) +
+      "</span>"
+    );
+  }
+
+  if (currentRideView === "driver" && source.confirmed_seat_count) {
+    details.push(
+      '<span class="card-detail-item">' +
+      hopinEscapeHtml(
+        source.confirmed_seat_count +
+          (source.confirmed_seat_count === 1 ? " seat reserved" : " seats reserved")
+      ) +
+      "</span>"
+    );
+  }
+
+  if (currentRideView === "driver") {
+    buttons.push(
+      '<a class="btn btn-outline-secondary btn-sm" href="/my-requests?view=driver">Open My Requests</a>'
+    );
+    footerText =
+      statusLabel + " | " +
+      (source.seats_available === 1 ? "1 seat still open" : source.seats_available + " seats still open");
+  } else {
+    buttons.push(
+      '<a class="btn btn-outline-secondary btn-sm" href="/my-requests?view=rider">Track Request</a>'
+    );
+    footerText =
+      statusLabel + " | " +
+      (item.seats_requested
+        ? (item.seats_requested === 1 ? "1 seat booked for you" : item.seats_requested + " seats booked for you")
+        : "Watch for pickup updates");
   }
 
   return renderJourneyCard({
@@ -216,8 +314,8 @@ function renderRideCard(item, typeLabel) {
     personHtml: getPersonSummary(personInfo.name, personInfo.meta, personInfo.rating),
     status: item.status || source.status || "open",
     footerText: footerText,
-    buttonsHtml:
-      '<a class="btn btn-outline-primary btn-sm" href="' + getRideDetailHref(item) + '">View Details</a>'
+    buttonsHtml: buttons.join("") + (extraButtonsHtml || ""),
+    extraContentHtml: extraContentHtml || ""
   });
 }
 
@@ -231,12 +329,200 @@ function renderRideSection(title, description, itemsHtml) {
   );
 }
 
+function renderSummaryCard(label, value, note) {
+  return (
+    '<div class="summary-card">' +
+    '<span class="summary-label">' + hopinEscapeHtml(label) + "</span>" +
+    '<strong class="summary-value">' + hopinEscapeHtml(String(value)) + "</strong>" +
+    '<div class="summary-note">' + hopinEscapeHtml(note) + "</div>" +
+    "</div>"
+  );
+}
+
+function getCompleteActionButton(buttonClassName, requestId, dateValue, timeValue) {
+  if (!hopinHasScheduledTimePassed(dateValue, timeValue)) {
+    return '<button class="btn btn-outline-secondary btn-sm" type="button" disabled>After Ride Time</button>';
+  }
+
+  return (
+    '<button class="btn btn-outline-success btn-sm ' +
+    buttonClassName +
+    '" data-id="' +
+    requestId +
+    '" type="button">Mark Completed</button>'
+  );
+}
+
+function renderCompletedActionPanel(options) {
+  return (
+    '<div class="completed-actions-panel">' +
+    '<div class="card-actions pt-3">' +
+    (options.markCompletedButtonHtml || "") +
+    (options.rateButtonHtml || "") +
+    (options.reportButtonHtml || "") +
+    "</div>" +
+    (options.ratingFormHtml || "") +
+    (options.reportFormHtml || "") +
+    "</div>"
+  );
+}
+
+function getRatingFormHtml(options) {
+  if (!options.reviewedUserId) {
+    return "";
+  }
+
+  return (
+    '<form class="inline-action-form js-rating-form d-none-soft mt-3" ' +
+    'data-reviewed-user-id="' + hopinEscapeHtml(options.reviewedUserId) + '" ' +
+    'data-ride-id="' + hopinEscapeHtml(options.rideId || "") + '" ' +
+    'data-booking-request-id="' + hopinEscapeHtml(options.bookingRequestId || "") + '" ' +
+    'data-open-ride-request-id="' + hopinEscapeHtml(options.openRideRequestId || "") + '">' +
+    '<div class="form-label mb-2">Rate ' + hopinEscapeHtml(options.reviewedUserName || "user") + "</div>" +
+    '<div class="row g-3 align-items-end">' +
+    '<div class="col-md-3"><label class="form-label">Score</label><select class="form-select" name="score"><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div>' +
+    '<div class="col-md-7"><label class="form-label">Comment</label><input class="form-control" name="comment" type="text" placeholder="Share a short experience note"></div>' +
+    '<div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Submit</button></div>' +
+    "</div>" +
+    "</form>"
+  );
+}
+
+function getReportFormHtml(options) {
+  if (!options.reportedUserId) {
+    return "";
+  }
+
+  return (
+    '<form class="inline-action-form js-report-form d-none-soft mt-3" ' +
+    'data-reported-user-id="' + hopinEscapeHtml(options.reportedUserId) + '" ' +
+    'data-ride-id="' + hopinEscapeHtml(options.rideId || "") + '" ' +
+    'data-booking-request-id="' + hopinEscapeHtml(options.bookingRequestId || "") + '" ' +
+    'data-open-ride-request-id="' + hopinEscapeHtml(options.openRideRequestId || "") + '">' +
+    '<div class="form-label mb-2">Report ' + hopinEscapeHtml(options.reportedUserName || "user") + "</div>" +
+    '<div class="row g-3 align-items-end">' +
+    '<div class="col-md-4"><label class="form-label">Reason</label><select class="form-select" name="reason"><option value="No show">No show</option><option value="Unsafe behavior">Unsafe behavior</option><option value="Late arrival">Late arrival</option><option value="Other">Other</option></select></div>' +
+    '<div class="col-md-6"><label class="form-label">Details</label><input class="form-control" name="details" type="text" placeholder="Write a short note"></div>' +
+    '<div class="col-md-2"><button class="btn btn-dark w-100" type="submit">Submit</button></div>' +
+    "</div>" +
+    "</form>"
+  );
+}
+
+function updateMyRidesHero(data) {
+  var currentUser = getCurrentRideUser();
+  var currentName = currentUser && currentUser.full_name ? currentUser.full_name : "Current user";
+  var heroCopy = "";
+  var summaryHtml = "";
+
+  if (currentRideView === "rider") {
+    var upcomingBookedRides = data.upcoming_booked_rides || [];
+    var acceptedOpenRideRequests = data.accepted_open_ride_requests || [];
+    var completedBookedRides = data.completed_booked_rides || [];
+    var completedOpenRideRequests = data.completed_open_ride_requests || [];
+    var totalUpcoming = upcomingBookedRides.length + acceptedOpenRideRequests.length;
+    var totalCompleted = completedBookedRides.length + completedOpenRideRequests.length;
+
+    heroCopy =
+      currentName +
+      " is in Rider View. Accepted bookings and accepted rider requests will show here as your upcoming rides.";
+    summaryHtml =
+      renderSummaryCard("Upcoming rides", totalUpcoming, "All rides currently matched for you") +
+      renderSummaryCard("Accepted bookings", upcomingBookedRides.length, "Joined from a posted driver ride") +
+      renderSummaryCard("Completed rides", totalCompleted, "Finished rides ready for rating or reporting");
+  } else {
+    var upcomingPostedRides = data.upcoming_posted_rides || [];
+    var acceptedRiderRequests = data.accepted_rider_requests || [];
+    var completedPostedRides = data.completed_posted_rides || [];
+    var completedRiderRequests = data.completed_rider_requests || [];
+    var openSeatCount = upcomingPostedRides.reduce(function (total, ride) {
+      return total + Number(ride.seats_available || 0);
+    }, 0);
+    var totalCompletedDriver = completedPostedRides.length + completedRiderRequests.length;
+
+    heroCopy =
+      currentName +
+      " is in Driver View. Your active posted rides and the rider requests you already matched are shown here.";
+    summaryHtml =
+      renderSummaryCard("Posted rides", upcomingPostedRides.length, "Active rides currently visible to riders") +
+      renderSummaryCard("Open seats", openSeatCount, "Seats still available across your rides") +
+      renderSummaryCard("Completed activity", totalCompletedDriver, "Finished rides and completed rider requests");
+  }
+
+  $("#my-rides-hero-copy").text(heroCopy);
+  $("#my-rides-summary").html(summaryHtml);
+}
+
+function collectVehicleUserIds(data) {
+  var userIds = [];
+
+  if (currentRideView === "rider") {
+    (data.upcoming_booked_rides || []).forEach(function (item) {
+      if (item.ride_details && item.ride_details.driver_id) {
+        userIds.push(item.ride_details.driver_id);
+      }
+    });
+
+    (data.completed_booked_rides || []).forEach(function (item) {
+      if (item.ride_details && item.ride_details.driver_id) {
+        userIds.push(item.ride_details.driver_id);
+      }
+    });
+
+    (data.accepted_open_ride_requests || []).forEach(function (item) {
+      if (item.accepted_driver_id) {
+        userIds.push(item.accepted_driver_id);
+      }
+    });
+
+    (data.completed_open_ride_requests || []).forEach(function (item) {
+      if (item.accepted_driver_id) {
+        userIds.push(item.accepted_driver_id);
+      }
+    });
+  } else {
+    var currentUserId = getCurrentRideUserId();
+
+    if (currentUserId) {
+      userIds.push(currentUserId);
+    }
+  }
+
+  return Array.from(new Set(userIds.filter(Boolean)));
+}
+
+function loadVehicleMapForUsers(userIds) {
+  myRideVehicleMap = {};
+
+  if (!userIds.length) {
+    return Promise.resolve({});
+  }
+
+  return Promise.all(userIds.map(function (userId) {
+    return $.getJSON("/api/users/" + userId + "/vehicles")
+      .then(function (response) {
+        return response.data || [];
+      })
+      .catch(function () {
+        return [];
+      });
+  })).then(function (vehicleLists) {
+    vehicleLists.forEach(function (vehicles) {
+      vehicles.forEach(function (vehicle) {
+        myRideVehicleMap[vehicle.id] = vehicle;
+      });
+    });
+
+    return myRideVehicleMap;
+  });
+}
+
 function renderRiderActionPanel() {
   return (
-    '<section class="content-card">' +
+    '<section class="content-card action-panel-card">' +
     '<div class="action-strip">' +
     "<div>" +
-    '<h2 class="section-title mb-1">Rider actions</h2>' +
+      '<h2 class="section-title mb-1">Rider actions</h2>' +
     '<p class="placeholder-note mb-0">Request a new ride here, then track its pending status on My Requests.</p>' +
     "</div>" +
     '<div class="d-flex gap-2 flex-wrap">' +
@@ -245,6 +531,7 @@ function renderRiderActionPanel() {
     "</div>" +
     "</div>" +
     '<div id="rider-action-form" class="d-none-soft mt-4">' +
+    '<div class="action-form-intro mb-3">Fill in the ride you need. After posting, check My Requests to see if any driver accepts it.</div>' +
     '<form id="my-rides-request-form" class="row g-3">' +
     '<div class="col-md-6"><label class="form-label">From</label><input class="form-control" name="origin" type="text" placeholder="Harbour Landing" required></div>' +
     '<div class="col-md-6"><label class="form-label">To</label><input class="form-control" name="destination" type="text" placeholder="University of Regina" required></div>' +
@@ -261,7 +548,7 @@ function renderRiderActionPanel() {
 
 function renderDriverActionPanel() {
   return (
-    '<section class="content-card">' +
+    '<section class="content-card action-panel-card">' +
     '<div class="action-strip">' +
     "<div>" +
     '<h2 class="section-title mb-1">Driver actions</h2>' +
@@ -273,6 +560,7 @@ function renderDriverActionPanel() {
     "</div>" +
     "</div>" +
     '<div id="driver-action-form" class="d-none-soft mt-4">' +
+    '<div class="action-form-intro mb-3">Post a ride with the route, date, time, and vehicle you want to offer. Riders will then see it on Find Rides.</div>' +
     '<form id="my-rides-post-form" class="row g-3">' +
     '<div class="col-md-6"><label class="form-label">Pickup / From</label><input class="form-control" name="origin" type="text" placeholder="Albert Street & 25th Ave" required></div>' +
     '<div class="col-md-6"><label class="form-label">Drop-off / To</label><input class="form-control" name="destination" type="text" placeholder="University of Regina" required></div>' +
@@ -291,10 +579,14 @@ function renderDriverActionPanel() {
 
 function renderMyRides(data) {
   var html = "";
+  myRideCurrentData = data;
+  updateMyRidesHero(data);
 
   if (currentRideView === "rider") {
     var upcomingBookedRides = data.upcoming_booked_rides || [];
     var acceptedOpenRideRequests = data.accepted_open_ride_requests || [];
+    var completedBookedRides = data.completed_booked_rides || [];
+    var completedOpenRideRequests = data.completed_open_ride_requests || [];
 
     $("#my-rides-actions").html(renderRiderActionPanel());
 
@@ -303,7 +595,12 @@ function renderMyRides(data) {
       "These are rides where your booking request was accepted.",
       upcomingBookedRides.length
         ? upcomingBookedRides.map(function (item) {
-            return renderRideCard(item, "Accepted booking");
+            return renderRideCard(
+              item,
+              "Accepted booking",
+              '<a class="btn btn-outline-secondary btn-sm" href="' + getMessagesHref(item) + '">Messages</a>' +
+              '<button class="btn btn-outline-danger btn-sm js-cancel-booked-ride" data-id="' + item.id + '" type="button">Cancel Ride</button>'
+            );
           }).join("")
         : getRideEmptyState("No accepted booking requests yet.")
     );
@@ -313,13 +610,79 @@ function renderMyRides(data) {
       "These are rider requests that a driver accepted for you.",
       acceptedOpenRideRequests.length
         ? acceptedOpenRideRequests.map(function (item) {
-            return renderRideCard(item, "Accepted rider request");
+            return renderRideCard(
+              item,
+              "Accepted rider request",
+              '<a class="btn btn-outline-secondary btn-sm" href="' + getMessagesHref(item) + '">Messages</a>' +
+              '<button class="btn btn-outline-danger btn-sm js-cancel-open-ride-match" data-id="' + item.id + '" type="button">Cancel Ride</button>'
+            );
           }).join("")
         : getRideEmptyState("No driver has accepted your open ride requests yet.")
+    );
+
+    html += renderRideSection(
+      "Completed Rides",
+      "These rides are finished, so you can leave a rating or file a report if needed.",
+      completedBookedRides.length || completedOpenRideRequests.length
+        ? completedBookedRides.map(function (item) {
+            var driver = item.driver_details || {};
+
+            return renderRideCard(
+              item,
+              "Completed booking",
+              '<a class="btn btn-outline-secondary btn-sm" href="' + getMessagesHref(item) + '">Messages</a>',
+              renderCompletedActionPanel({
+                rateButtonHtml:
+                  '<button class="btn btn-outline-primary btn-sm js-toggle-rating-form" type="button">Rate Driver</button>',
+                reportButtonHtml:
+                  '<button class="btn btn-outline-dark btn-sm js-toggle-report-form" type="button">Report</button>',
+                ratingFormHtml: getRatingFormHtml({
+                  reviewedUserId: driver.id,
+                  reviewedUserName: driver.full_name,
+                  rideId: item.ride_details && item.ride_details.id,
+                  bookingRequestId: item.id
+                }),
+                reportFormHtml: getReportFormHtml({
+                  reportedUserId: driver.id,
+                  reportedUserName: driver.full_name,
+                  rideId: item.ride_details && item.ride_details.id,
+                  bookingRequestId: item.id
+                })
+              })
+            );
+          }).join("") +
+          completedOpenRideRequests.map(function (item) {
+            var driver = item.accepted_driver_details || {};
+
+            return renderRideCard(
+              item,
+              "Completed rider request",
+              '<a class="btn btn-outline-secondary btn-sm" href="' + getMessagesHref(item) + '">Messages</a>',
+              renderCompletedActionPanel({
+                rateButtonHtml:
+                  '<button class="btn btn-outline-primary btn-sm js-toggle-rating-form" type="button">Rate Driver</button>',
+                reportButtonHtml:
+                  '<button class="btn btn-outline-dark btn-sm js-toggle-report-form" type="button">Report</button>',
+                ratingFormHtml: getRatingFormHtml({
+                  reviewedUserId: driver.id,
+                  reviewedUserName: driver.full_name,
+                  openRideRequestId: item.id
+                }),
+                reportFormHtml: getReportFormHtml({
+                  reportedUserId: driver.id,
+                  reportedUserName: driver.full_name,
+                  openRideRequestId: item.id
+                })
+              })
+            );
+          }).join("")
+        : getRideEmptyState("Completed rides will appear here after the driver marks them finished.")
     );
   } else {
     var upcomingPostedRides = data.upcoming_posted_rides || [];
     var acceptedRiderRequests = data.accepted_rider_requests || [];
+    var completedPostedRides = data.completed_posted_rides || [];
+    var completedRiderRequests = data.completed_rider_requests || [];
 
     $("#my-rides-actions").html(renderDriverActionPanel());
 
@@ -328,7 +691,17 @@ function renderMyRides(data) {
       "These are active rides you posted as a driver.",
       upcomingPostedRides.length
         ? upcomingPostedRides.map(function (item) {
-            return renderRideCard(item, "Posted ride");
+            return renderRideCard(
+              item,
+              "Posted ride",
+              getCompleteActionButton(
+                "js-mark-ride-completed",
+                item.id,
+                item.ride_date,
+                item.ride_time
+              ) +
+              '<button class="btn btn-outline-danger btn-sm js-cancel-posted-ride" data-id="' + item.id + '" type="button">Cancel Ride</button>'
+            );
           }).join("")
         : getRideEmptyState("You have no active posted rides.")
     );
@@ -338,9 +711,55 @@ function renderMyRides(data) {
       "These are open rider requests that you accepted.",
       acceptedRiderRequests.length
         ? acceptedRiderRequests.map(function (item) {
-            return renderRideCard(item, "Accepted rider request");
+            return renderRideCard(
+              item,
+              "Accepted rider request",
+              '<a class="btn btn-outline-secondary btn-sm" href="' + getMessagesHref(item) + '">Messages</a>' +
+              getCompleteActionButton(
+                "js-mark-open-ride-completed",
+                item.id,
+                item.ride_date,
+                item.ride_time
+              ) +
+              '<button class="btn btn-outline-danger btn-sm js-driver-cancel-open-ride-match" data-id="' + item.id + '" type="button">Cancel Match</button>'
+            );
           }).join("")
         : getRideEmptyState("You have not accepted any rider requests yet.")
+    );
+
+    html += renderRideSection(
+      "Completed Activity",
+      "Finished rides and completed rider requests stay here for your records.",
+      completedPostedRides.length || completedRiderRequests.length
+        ? completedPostedRides.map(function (item) {
+            return renderRideCard(item, "Completed posted ride");
+          }).join("") +
+          completedRiderRequests.map(function (item) {
+            var rider = item.rider_details || {};
+
+            return renderRideCard(
+              item,
+              "Completed rider request",
+              '<a class="btn btn-outline-secondary btn-sm" href="' + getMessagesHref(item) + '">Messages</a>',
+              renderCompletedActionPanel({
+                rateButtonHtml:
+                  '<button class="btn btn-outline-primary btn-sm js-toggle-rating-form" type="button">Rate Rider</button>',
+                reportButtonHtml:
+                  '<button class="btn btn-outline-dark btn-sm js-toggle-report-form" type="button">Report</button>',
+                ratingFormHtml: getRatingFormHtml({
+                  reviewedUserId: rider.id,
+                  reviewedUserName: rider.full_name,
+                  openRideRequestId: item.id
+                }),
+                reportFormHtml: getReportFormHtml({
+                  reportedUserId: rider.id,
+                  reportedUserName: rider.full_name,
+                  openRideRequestId: item.id
+                })
+              })
+            );
+          }).join("")
+        : getRideEmptyState("Completed ride history will appear here.")
     );
   }
 
@@ -378,7 +797,11 @@ function loadMyRides() {
     view: currentRideView
   })
     .done(function (response) {
-      renderMyRides(response.data);
+      var data = response.data || {};
+
+      loadVehicleMapForUsers(collectVehicleUserIds(data)).then(function () {
+        renderMyRides(data);
+      });
     })
     .fail(function () {
       $("#my-rides-content").html(
@@ -440,8 +863,14 @@ function submitRideRequest(formData) {
       pendingRideAction = "";
       loadMyRides();
     })
-    .fail(function () {
-      setMyRidesFeedback("Could not post the ride request.", "danger");
+    .fail(function (xhr) {
+      var message = "Could not post the ride request.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
     });
 }
 
@@ -464,7 +893,7 @@ function submitPostedRide(formData) {
   })
     .done(function () {
       setMyRidesFeedback(
-        'Ride posted successfully. You can review incoming requests on <a href="/my-requests?view=driver">My Requests</a>.',
+        'Ride posted successfully. It will now appear on <a href="/find-ride">Find Rides</a>, and you can review incoming requests on <a href="/my-requests?view=driver">My Requests</a>.',
         "success"
       );
       $("#my-rides-post-form")[0].reset();
@@ -476,6 +905,200 @@ function submitPostedRide(formData) {
       var message = "Could not post the ride.";
 
       if (xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function cancelBookingRide(requestId) {
+  $.ajax({
+    url: "/api/booking-requests/" + requestId + "/status",
+    method: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({
+      status: "cancelled",
+      actor_user_id: getCurrentRideUserId()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback(
+        'Ride cancelled. You can see the update in <a href="/my-requests?view=rider">My Requests</a>.',
+        "success"
+      );
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not cancel this booked ride.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function cancelOpenRideMatch(requestId) {
+  $.ajax({
+    url: "/api/open-ride-requests/" + requestId + "/status",
+    method: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({
+      status: "cancelled",
+      actor_user_id: getCurrentRideUserId()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback(
+        'Ride match cancelled. You can see the update in <a href="/my-requests?view=' + currentRideView + '">My Requests</a>.',
+        "success"
+      );
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not cancel this matched ride.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function cancelPostedRide(rideId) {
+  $.ajax({
+    url: "/api/rides/" + rideId + "/status",
+    method: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({
+      status: "cancelled",
+      actor_user_id: getCurrentRideUserId()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback(
+        'Posted ride cancelled. Riders will see a cancellation update in My Requests.',
+        "success"
+      );
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not cancel this posted ride.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function markRideCompleted(rideId) {
+  $.ajax({
+    url: "/api/rides/" + rideId + "/status",
+    method: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({
+      status: "completed",
+      actor_user_id: getCurrentRideUserId()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback("Ride marked as completed.", "success");
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not mark this ride as completed.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function markOpenRideCompleted(requestId) {
+  $.ajax({
+    url: "/api/open-ride-requests/" + requestId + "/status",
+    method: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({
+      status: "completed",
+      actor_user_id: getCurrentRideUserId()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback("Matched rider request marked as completed.", "success");
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not mark this rider request as completed.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function submitRideRating($form) {
+  $.ajax({
+    url: "/api/ratings",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      reviewer_id: getCurrentRideUserId(),
+      reviewed_user_id: $form.data("reviewed-user-id"),
+      ride_id: $form.data("ride-id") || null,
+      booking_request_id: $form.data("booking-request-id") || null,
+      open_ride_request_id: $form.data("open-ride-request-id") || null,
+      score: $form.find('[name="score"]').val(),
+      comment: $form.find('[name="comment"]').val()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback("Rating submitted successfully.", "success");
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not submit this rating.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setMyRidesFeedback(message, "danger");
+    });
+}
+
+function submitRideReport($form) {
+  $.ajax({
+    url: "/api/reports",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      reporter_id: getCurrentRideUserId(),
+      reported_user_id: $form.data("reported-user-id"),
+      ride_id: $form.data("ride-id") || null,
+      booking_request_id: $form.data("booking-request-id") || null,
+      open_ride_request_id: $form.data("open-ride-request-id") || null,
+      reason: $form.find('[name="reason"]').val(),
+      details: $form.find('[name="details"]').val()
+    })
+  })
+    .done(function () {
+      setMyRidesFeedback("Report submitted successfully.", "success");
+      loadMyRides();
+    })
+    .fail(function (xhr) {
+      var message = "Could not submit this report.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
         message = xhr.responseJSON.message;
       }
 
@@ -592,5 +1215,47 @@ $(function () {
     currentRideView = normalizeRideViewForRole(currentRideView, role);
     pendingRideAction = "";
     loadMyRides();
+  });
+
+  $(document).on("click", ".js-cancel-booked-ride", function () {
+    cancelBookingRide($(this).data("id"));
+  });
+
+  $(document).on("click", ".js-cancel-open-ride-match", function () {
+    cancelOpenRideMatch($(this).data("id"));
+  });
+
+  $(document).on("click", ".js-driver-cancel-open-ride-match", function () {
+    cancelOpenRideMatch($(this).data("id"));
+  });
+
+  $(document).on("click", ".js-cancel-posted-ride", function () {
+    cancelPostedRide($(this).data("id"));
+  });
+
+  $(document).on("click", ".js-mark-ride-completed", function () {
+    markRideCompleted($(this).data("id"));
+  });
+
+  $(document).on("click", ".js-mark-open-ride-completed", function () {
+    markOpenRideCompleted($(this).data("id"));
+  });
+
+  $(document).on("click", ".js-toggle-rating-form", function () {
+    $(this).closest(".completed-actions-panel").find(".js-rating-form").slideToggle(150);
+  });
+
+  $(document).on("click", ".js-toggle-report-form", function () {
+    $(this).closest(".completed-actions-panel").find(".js-report-form").slideToggle(150);
+  });
+
+  $(document).on("submit", ".js-rating-form", function (event) {
+    event.preventDefault();
+    submitRideRating($(this));
+  });
+
+  $(document).on("submit", ".js-report-form", function (event) {
+    event.preventDefault();
+    submitRideReport($(this));
   });
 });

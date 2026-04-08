@@ -18,3 +18,5 @@ exports.getProfileSettingsPage = (req, res) =>
 exports.getVehicleSettingsPage = (req, res) =>
   res.redirect("/profile-settings?tab=vehicle");
 exports.getMessagesPage = (req, res) => sendPage(res, "messages.html");
+exports.getLoginPage = (req, res) => sendPage(res, "login.html");
+exports.getSignupPage = (req, res) => sendPage(res, "signup.html");

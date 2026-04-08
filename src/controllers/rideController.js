@@ -53,6 +53,23 @@ exports.updateRide = async (req, res, next) => {
   }
 };
 
+exports.updateRideStatus = async (req, res, next) => {
+  try {
+    const ride = await rideService.updateRideStatus(
+      req.params.id,
+      req.body.status,
+      req.body.actor_user_id
+    );
+
+    res.json({
+      success: true,
+      data: ride
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.deleteRide = async (req, res, next) => {
   try {
     const result = await rideService.deleteRide(req.params.id);
@@ -65,4 +82,3 @@ exports.deleteRide = async (req, res, next) => {
     next(error);
   }
 };
-

@@ -36,7 +36,9 @@ function renderHomeRideCard(ride) {
 function loadHomeRides() {
   $.getJSON("/api/rides")
     .done(function (response) {
-      var rides = response.data || [];
+      var rides = (response.data || []).filter(function (ride) {
+        return ride.status !== "completed" && ride.status !== "cancelled";
+      });
 
       if (!rides.length) {
         $("#home-rides-list").html(

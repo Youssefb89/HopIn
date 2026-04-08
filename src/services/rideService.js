@@ -1,5 +1,19 @@
 const rideModel = require("../models/rideModel");
 
+function getScheduledDateTime(dateValue, timeValue) {
+  if (!dateValue || !timeValue) {
+    return null;
+  }
+
+  const scheduledDate = new Date(`${dateValue}T${String(timeValue).slice(0, 8)}`);
+
+  if (Number.isNaN(scheduledDate.getTime())) {
+    return null;
+  }
+
+  return scheduledDate;
+}
+
 exports.getRides = async (filters) => {
   return rideModel.getAll(filters);
 };
@@ -52,6 +66,64 @@ exports.updateRide = async (rideId, updates) => {
   }
 
   return rideModel.update(rideId, updates);
+};
+
+exports.updateRideStatus = async (rideId, status, actorUserId) => {
+  if (!rideId || !status) {
+    throw new Error("Ride id and status are required.");
+  }
+
+  const ride = await rideModel.getById(rideId);
+
+  if (!ride) {
+    throw new Error("Ride not found.");
+  }
+
+  if (status !== "cancelled") {
+    if (status !== "completed") {
+      return rideModel.update(rideId, { status: status });
+    }
+
+    if (actorUserId && actorUserId !== ride.driver_id) {
+      throw new Error("Only the driver who posted this ride can mark it completed.");
+    }
+
+    const scheduledDate = getScheduledDateTime(ride.ride_date, ride.ride_time);
+
+    if (!scheduledDate || scheduledDate.getTime() > Date.now()) {
+      throw new Error("This ride cannot be marked completed until its scheduled date and time have passed.");
+    }
+
+    const rideRequestModel = require("../models/rideRequestModel");
+    const updatedRide = await rideModel.update(rideId, { status: "completed" });
+
+    await rideRequestModel.updateBookingRequestsStatusByRide(
+      rideId,
+      ["accepted"],
+      "completed"
+    );
+
+    return updatedRide;
+  }
+
+  if (actorUserId && actorUserId !== ride.driver_id) {
+    throw new Error("Only the driver who posted this ride can cancel it.");
+  }
+
+  if (ride.status === "cancelled") {
+    return ride;
+  }
+
+  const updatedRide = await rideModel.update(rideId, { status: "cancelled" });
+  const rideRequestModel = require("../models/rideRequestModel");
+
+  await rideRequestModel.updateBookingRequestsStatusByRide(
+    rideId,
+    ["requested", "accepted", "ignored"],
+    "cancelled"
+  );
+
+  return updatedRide;
 };
 
 exports.deleteRide = async (rideId) => {

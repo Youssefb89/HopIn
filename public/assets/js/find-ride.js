@@ -1,7 +1,9 @@
 var findRideState = {
   rides: [],
   filteredRides: [],
-  view: "list"
+  view: "list",
+  map: null,
+  mapLayers: []
 };
 
 function formatDriverVehicle(ride) {
@@ -62,12 +64,97 @@ function renderFindRideCard(ride) {
   );
 }
 
-function renderFindMapPlaceholder() {
+function clearFindRideMapLayers() {
+  if (!findRideState.mapLayers.length) {
+    return;
+  }
+
+  findRideState.mapLayers.forEach(function (layer) {
+    if (findRideState.map && layer) {
+      findRideState.map.removeLayer(layer);
+    }
+  });
+
+  findRideState.mapLayers = [];
+}
+
+function ensureFindRideMap() {
+  if (findRideState.map || typeof L === "undefined") {
+    return;
+  }
+
+  findRideState.map = L.map("find-map-canvas", {
+    zoomControl: true,
+    attributionControl: true
+  }).setView([50.4452, -104.6189], 11);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(findRideState.map);
+}
+
+function renderFindRideMap() {
+  ensureFindRideMap();
+
+  if (!findRideState.map) {
+    return;
+  }
+
+  clearFindRideMapLayers();
+
   if (!findRideState.filteredRides.length) {
     $("#find-map-summary").html(
       '<div class="empty-state">No rides match those filters right now.</div>'
     );
+    findRideState.map.setView([50.4452, -104.6189], 11);
     return;
+  }
+
+  var visibleRides = findRideState.filteredRides.slice(0, 8);
+  var bounds = [];
+  var accentColors = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#0ea5e9", "#8b5cf6"];
+
+  visibleRides.forEach(function (ride, index) {
+    var routeLatLng = hopinGetRouteLatLng(ride.origin, ride.destination, ride.id);
+    var accentColor = accentColors[index % accentColors.length];
+    var line = L.polyline([routeLatLng.origin, routeLatLng.destination], {
+      color: accentColor,
+      weight: 4,
+      opacity: 0.85
+    }).bindPopup(
+      "<strong>" + hopinEscapeHtml(ride.origin) + "</strong> to <strong>" + hopinEscapeHtml(ride.destination) + "</strong><br>" +
+      hopinEscapeHtml(ride.driver_name) + " | " +
+      hopinEscapeHtml(hopinFormatDateLabel(ride.ride_date)) + " | " +
+      hopinEscapeHtml(hopinFormatTimeLabel(ride.ride_time))
+    );
+    var originMarker = L.circleMarker(routeLatLng.origin, {
+      radius: 7,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: accentColor,
+      fillOpacity: 1
+    }).bindTooltip(ride.origin, { direction: "top" });
+    var destinationMarker = L.circleMarker(routeLatLng.destination, {
+      radius: 7,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: "#111827",
+      fillOpacity: 1
+    }).bindTooltip(ride.destination, { direction: "top" });
+
+    line.addTo(findRideState.map);
+    originMarker.addTo(findRideState.map);
+    destinationMarker.addTo(findRideState.map);
+
+    findRideState.mapLayers.push(line, originMarker, destinationMarker);
+    bounds.push(routeLatLng.origin, routeLatLng.destination);
+  });
+
+  if (bounds.length) {
+    findRideState.map.fitBounds(bounds, {
+      padding: [36, 36]
+    });
   }
 
   $("#find-map-summary").html(
@@ -129,7 +216,7 @@ function applyFindRideFilters() {
   });
 
   renderFindRideList();
-  renderFindMapPlaceholder();
+  renderFindRideMap();
 }
 
 async function enrichRideData(rides) {
@@ -205,7 +292,13 @@ function applyFindRideView() {
   if (findRideState.view === "map") {
     $("#find-map-panel").removeClass("d-none-soft");
     $("#find-ride-results").addClass("d-none-soft");
-    renderFindMapPlaceholder();
+    renderFindRideMap();
+
+    window.setTimeout(function () {
+      if (findRideState.map) {
+        findRideState.map.invalidateSize();
+      }
+    }, 80);
 
     return;
   }

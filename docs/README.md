@@ -30,7 +30,7 @@ I split the docs by topic so it is easier to read one workflow at a time.
   This explains the full Profile page flow from frontend to database.
 
 - `home-find-rides/README.md`
-  This explains the Home page, Find Ride page, filters, placeholder map, and ride details navigation.
+  This explains the Home page, Find Ride page, filters, Leaflet map view, and ride details navigation.
 
 - `my-requests/README.md`
   This explains rider view, driver view, booking requests, and request acceptance flow.

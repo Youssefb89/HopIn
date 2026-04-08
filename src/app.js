@@ -6,8 +6,10 @@ const userRoutes = require("./routes/userRoutes");
 const rideRoutes = require("./routes/rideRoutes");
 const rideRequestRoutes = require("./routes/rideRequestRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 const scheduleRoutes = require("./routes/scheduleRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -31,8 +33,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/rides", rideRoutes);
 app.use("/api", rideRequestRoutes);
 app.use("/api/ratings", ratingRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/auth", authRoutes);
 
 app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;

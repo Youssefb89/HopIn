@@ -28,15 +28,18 @@ SUPABASE_ANON_KEY=your-supabase-anon-key
 
 This project is using the Supabase anon key only.
 
-## 4. Run the schema
+## 4. Run the SQL files
 
 Open Supabase SQL Editor and run:
 
-- `supabase/schema.sql`
+1. `supabase/schema.sql`
+2. `supabase/seed.sql`
 
-If your tables were already created before the return commute time was added, also run:
+If your database was created earlier and your code is newer now, also run these migration files when needed:
 
-- `supabase/add-schedule-return-time.sql`
+- `supabase/add-open-ride-request-declined-status.sql`
+- `supabase/allow-zero-seats-on-full-rides.sql`
+- `supabase/add-reports-table.sql`
 
 ## 5. Disable RLS if needed
 
@@ -50,21 +53,21 @@ alter table booking_requests disable row level security;
 alter table open_ride_requests disable row level security;
 alter table messages disable row level security;
 alter table ratings disable row level security;
+alter table reports disable row level security;
 alter table schedules disable row level security;
 ```
 
-## 6. Add sample profiles
+## 6. Optional sample vehicles and rides
 
-Run:
+`seed.sql` adds only the 8 profiles.
 
-- `supabase/seed.sql`
+If you want the app to show ride cards right away, also add:
 
-This adds the 8 profile rows.
+1. one vehicle for each demo driver
+2. a few rides
+3. link rides to vehicles
 
-Optional cleanup files:
-
-- `supabase/clear-non-profile-data.sql`
-- `supabase/remove-old-9th-user.sql`
+The full copy-paste SQL is in the root [README.md](../README.md).
 
 ## 7. Start the app
 
@@ -108,8 +111,9 @@ At minimum, I suggest:
 flowchart TD
     A["Create Supabase project"] --> B["Add .env file"]
     B --> C["Run schema.sql"]
-    C --> D["Disable RLS if needed"]
-    D --> E["Run seed.sql"]
-    E --> F["npm.cmd run dev"]
-    F --> G["Open localhost:3000"]
+    C --> D["Run seed.sql"]
+    D --> E["Disable RLS if needed"]
+    E --> F["Optional rides and vehicles SQL"]
+    F --> G["npm.cmd run dev"]
+    G --> H["Open localhost:3000"]
 ```

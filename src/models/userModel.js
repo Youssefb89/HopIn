@@ -128,6 +128,50 @@ exports.getById = async (userId) => {
   return data;
 };
 
+exports.getByEmail = async (email) => {
+  if (!email) {
+    return null;
+  }
+
+  if (!db) {
+    return mockUsers.find((item) => item.email === email) || null;
+  }
+
+  const { data, error } = await db
+    .from("profiles")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+};
+
+exports.getByAuthUserId = async (authUserId) => {
+  if (!authUserId) {
+    return null;
+  }
+
+  if (!db) {
+    return mockUsers.find((item) => item.auth_user_id === authUserId) || null;
+  }
+
+  const { data, error } = await db
+    .from("profiles")
+    .select("*")
+    .eq("auth_user_id", authUserId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+};
+
 exports.update = async (userId, updates) => {
   if (!db) {
     const index = mockUsers.findIndex((item) => item.id === userId);

@@ -73,6 +73,26 @@ function renderSection(title, description, itemsHtml) {
   );
 }
 
+function renderUpdateItems(items) {
+  return items.map(function (item) {
+    return (
+      '<div class="info-panel">' +
+      '<div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">' +
+      '<div>' +
+      '<strong>' + hopinEscapeHtml(item.message) + "</strong>" +
+      '<div class="ride-meta mt-2">' +
+      hopinEscapeHtml((item.status || "").replace(/_/g, " ")) +
+      "</div>" +
+      "</div>" +
+      '<a class="btn btn-outline-primary btn-sm" href="' +
+      hopinEscapeHtml(item.detail_url || "/my-requests?view=rider") +
+      '">View Details</a>' +
+      "</div>" +
+      "</div>"
+    );
+  }).join("");
+}
+
 function renderRequestShortcut(view) {
   var href = view === "driver"
     ? "/my-rides?view=driver&action=post"
@@ -177,6 +197,12 @@ function renderBookingRequestCard(item, showActions) {
     );
   }
 
+  if (!showActions && (item.status === "requested" || item.status === "accepted")) {
+    buttons.push(
+      '<button class="btn btn-sm btn-outline-danger js-cancel-booking-request" data-id="' + item.id + '" type="button">Cancel Request</button>'
+    );
+  }
+
   return renderRequestCard({
     label: "Existing ride request",
     rideDate: ride.ride_date,
@@ -213,7 +239,16 @@ function renderOpenRideRequestCard(item, showActions) {
       '<button class="btn btn-sm btn-success js-open-request-accept" data-id="' + item.id + '" type="button">Accept</button>'
     );
     buttons.push(
+      '<button class="btn btn-sm btn-outline-danger js-open-request-decline" data-id="' + item.id + '" type="button">Decline</button>'
+    );
+    buttons.push(
       '<button class="btn btn-sm btn-outline-secondary js-open-request-ignore" data-id="' + item.id + '" type="button">Ignore</button>'
+    );
+  }
+
+  if (!showActions && (item.status === "open" || item.status === "accepted")) {
+    buttons.push(
+      '<button class="btn btn-sm btn-outline-danger js-cancel-open-request" data-id="' + item.id + '" type="button">Cancel Request</button>'
     );
   }
 
@@ -242,8 +277,18 @@ function renderMyRequests(data) {
   if (currentRequestView === "rider") {
     var sentBookingRequests = data.sent_booking_requests || [];
     var myOpenRideRequests = data.my_open_ride_requests || [];
+    var riderUpdates = data.rider_updates || [];
 
     html += renderRequestShortcut("rider");
+
+    if (riderUpdates.length) {
+      html += renderSection(
+        "Recent Request Updates",
+        "These updates are shown as text so your active request cards stay cleaner.",
+        renderUpdateItems(riderUpdates)
+      );
+    }
+
     html += renderSection(
       "Requests I Sent for Existing Rides",
       "These are booking requests you sent on rides posted by drivers.",
@@ -266,8 +311,18 @@ function renderMyRequests(data) {
   } else {
     var requestsOnMyRides = data.requests_on_my_rides || [];
     var riderOpenRequests = data.rider_open_requests || [];
+    var driverUpdates = data.driver_updates || [];
 
     html += renderRequestShortcut("driver");
+
+    if (driverUpdates.length) {
+      html += renderSection(
+        "Recent Rider Updates",
+        "These updates let you know when a rider cancels after you already matched or reviewed their request.",
+        renderUpdateItems(driverUpdates)
+      );
+    }
+
     html += renderSection(
       "Requests on My Posted Rides",
       "These are rider requests to join rides you already posted.",
@@ -353,11 +408,32 @@ function patchBookingRequestStatus(requestId, status) {
     url: "/api/booking-requests/" + requestId + "/status",
     method: "PATCH",
     contentType: "application/json",
-    data: JSON.stringify({ status: status })
+    data: JSON.stringify({
+      status: status,
+      actor_user_id: getCurrentRequestUserId()
+    })
   })
-    .done(function () {
-      setRequestFeedback("Booking request updated to " + status + ".", "success");
+    .done(function (response) {
+      var request = response.data || {};
+      var ride = request.ride_details || {};
+      var routeLabel =
+        (ride.origin || "Origin") + " to " + (ride.destination || "Destination");
+      var message = "Booking request updated to " + status + ".";
+
+      if (status === "accepted") {
+        message = "Booking request accepted for " + routeLabel + ".";
+      }
+
+      if (status === "declined") {
+        message = "Booking request declined for " + routeLabel + ".";
+      }
+
+      if (status === "cancelled") {
+        message = "Booking request cancelled for " + routeLabel + ".";
+      }
+
       loadMyRequests();
+      setRequestFeedback(message, "success");
     })
     .fail(function (xhr) {
       var message = "Could not update the booking request.";
@@ -370,22 +446,51 @@ function patchBookingRequestStatus(requestId, status) {
     });
 }
 
-function acceptOpenRideRequest(requestId) {
+function patchOpenRideRequestStatus(requestId, status) {
+  var payload = {
+    status: status,
+    actor_user_id: getCurrentRequestUserId()
+  };
+
+  if (status === "accepted" || status === "declined") {
+    payload.accepted_driver_id = getCurrentRequestUserId();
+  }
+
   $.ajax({
     url: "/api/open-ride-requests/" + requestId + "/status",
     method: "PATCH",
     contentType: "application/json",
-    data: JSON.stringify({
-      status: "accepted",
-      accepted_driver_id: getCurrentRequestUserId()
-    })
+    data: JSON.stringify(payload)
   })
-    .done(function () {
-      setRequestFeedback("Open rider request accepted.", "success");
+    .done(function (response) {
+      var request = response.data || {};
+      var routeLabel =
+        (request.origin || "Origin") + " to " + (request.destination || "Destination");
+      var message = "Open rider request updated.";
+
+      if (status === "accepted") {
+        message = "Open rider request accepted for " + routeLabel + ".";
+      }
+
+      if (status === "declined") {
+        message = "Open rider request declined for " + routeLabel + ".";
+      }
+
+      if (status === "cancelled") {
+        message = "Open rider request cancelled for " + routeLabel + ".";
+      }
+
       loadMyRequests();
+      setRequestFeedback(message, "success");
     })
-    .fail(function () {
-      setRequestFeedback("Could not accept the open rider request.", "danger");
+    .fail(function (xhr) {
+      var message = "Could not update the open rider request.";
+
+      if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+
+      setRequestFeedback(message, "danger");
     });
 }
 
@@ -419,7 +524,11 @@ $(function () {
   });
 
   $(document).on("click", ".js-open-request-accept", function () {
-    acceptOpenRideRequest($(this).data("id"));
+    patchOpenRideRequestStatus($(this).data("id"), "accepted");
+  });
+
+  $(document).on("click", ".js-open-request-decline", function () {
+    patchOpenRideRequestStatus($(this).data("id"), "declined");
   });
 
   $(document).on("click", ".js-open-request-ignore", function () {
@@ -428,6 +537,14 @@ $(function () {
       "Ignored on this screen only. The request stays open for other drivers.",
       "secondary"
     );
+  });
+
+  $(document).on("click", ".js-cancel-booking-request", function () {
+    patchBookingRequestStatus($(this).data("id"), "cancelled");
+  });
+
+  $(document).on("click", ".js-cancel-open-request", function () {
+    patchOpenRideRequestStatus($(this).data("id"), "cancelled");
   });
 
   $(document).on("hopin:user-changed", function () {
